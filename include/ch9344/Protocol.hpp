@@ -14,6 +14,7 @@ enum class Error {
     truncatedRxRecord,
     invalidRxPort,
     invalidRxLength,
+    invalidVersionResponse,
 };
 
 Error mapLogicalPort(uint8_t logicalPort, uint8_t* hardwarePort);
@@ -51,5 +52,38 @@ DecodeResult decodeRxTransfer(
     std::size_t inputLength,
     RxHandler handler,
     void* context);
+
+enum class ChipVariant {
+    ch9344L,
+    ch9344Q,
+};
+
+struct ChipInfo {
+    ChipVariant variant;
+    uint8_t version;
+};
+
+Error parseChipVersion(
+    const uint8_t* response,
+    std::size_t length,
+    ChipInfo* info);
+
+struct Command {
+    uint8_t bytes[16] {};
+    std::size_t length = 0;
+};
+
+struct CommandSequence {
+    Command commands[8] {};
+    std::size_t count = 0;
+};
+
+Error encodeDeviceInitialization(
+    const ChipInfo& chip,
+    CommandSequence* output);
+
+Error encodePortInitialization(
+    uint8_t logicalPort,
+    CommandSequence* output);
 
 } // namespace ch9344

@@ -262,6 +262,135 @@ void testRxValidatesPointersAndAcceptsEmptyInput()
     CHECK_EQ(capture.count, 0U);
 }
 
+void testChipVersionDistinguishesLAndQ()
+{
+    const uint8_t lResponse[] = {0x3f, 0x11, 0x22, 0x33};
+    const uint8_t qResponse[] = {0x40, 0xaa, 0xbb, 0xcc};
+    ch9344::ChipInfo info {ch9344::ChipVariant::ch9344Q, 0};
+
+    CHECK_EQ(
+        ch9344::parseChipVersion(lResponse, sizeof(lResponse), &info),
+        ch9344::Error::none);
+    CHECK_EQ(info.variant, ch9344::ChipVariant::ch9344L);
+    CHECK_EQ(info.version, 0x3f);
+
+    CHECK_EQ(
+        ch9344::parseChipVersion(qResponse, sizeof(qResponse), &info),
+        ch9344::Error::none);
+    CHECK_EQ(info.variant, ch9344::ChipVariant::ch9344Q);
+    CHECK_EQ(info.version, 0x40);
+}
+
+void testChipVersionRejectsMalformedResponse()
+{
+    const uint8_t response[] = {0x40, 0x11, 0x22, 0x33, 0x44};
+    ch9344::ChipInfo info {ch9344::ChipVariant::ch9344L, 0xa5};
+
+    CHECK_EQ(
+        ch9344::parseChipVersion(response, 3, &info),
+        ch9344::Error::invalidVersionResponse);
+    CHECK_EQ(info.variant, ch9344::ChipVariant::ch9344L);
+    CHECK_EQ(info.version, 0xa5);
+
+    CHECK_EQ(
+        ch9344::parseChipVersion(response, 5, &info),
+        ch9344::Error::invalidVersionResponse);
+    CHECK_EQ(
+        ch9344::parseChipVersion(nullptr, 4, &info),
+        ch9344::Error::invalidArgument);
+    CHECK_EQ(
+        ch9344::parseChipVersion(response, 4, nullptr),
+        ch9344::Error::invalidArgument);
+}
+
+void testUploadModeCommandForSupportedChipVersions()
+{
+    const uint8_t expected[] = {0x94, 0x9d, 0x01, 0, 0, 0, 0, 0};
+
+    for (const ch9344::ChipInfo chip : {
+             ch9344::ChipInfo {ch9344::ChipVariant::ch9344Q, 0x40},
+             ch9344::ChipInfo {ch9344::ChipVariant::ch9344L, 0x39}}) {
+        ch9344::CommandSequence output;
+
+        CHECK_EQ(
+            ch9344::encodeDeviceInitialization(chip, &output),
+            ch9344::Error::none);
+        CHECK_EQ(output.count, 1U);
+        CHECK_EQ(output.commands[0].length, sizeof(expected));
+        CHECK_BYTES(output.commands[0].bytes, expected, sizeof(expected));
+    }
+}
+
+void testOldLChipDoesNotRequireUploadModeCommand()
+{
+    ch9344::CommandSequence output;
+    const ch9344::ChipInfo chip {ch9344::ChipVariant::ch9344L, 0x38};
+
+    CHECK_EQ(
+        ch9344::encodeDeviceInitialization(chip, &output),
+        ch9344::Error::none);
+    CHECK_EQ(output.count, 0U);
+    CHECK_EQ(
+        ch9344::encodeDeviceInitialization(chip, nullptr),
+        ch9344::Error::invalidArgument);
+}
+
+void checkCommand(
+    const ch9344::Command& command,
+    const uint8_t* expected,
+    std::size_t expectedLength)
+{
+    CHECK_EQ(command.length, expectedLength);
+    CHECK_BYTES(command.bytes, expected, expectedLength);
+}
+
+void testPortInitializationUsesPerPortRegisterBase()
+{
+    const uint8_t portThreeExpected[][3] = {
+        {0xc0, 0x3a, 0x87},
+        {0xc0, 0x3b, 0x03},
+        {0xc0, 0x3c, 0x08},
+    };
+    const uint8_t portZeroExpected[][3] = {
+        {0xc0, 0x0a, 0x87},
+        {0xc0, 0x0b, 0x03},
+        {0xc0, 0x0c, 0x08},
+    };
+
+    ch9344::CommandSequence output;
+    CHECK_EQ(
+        ch9344::encodePortInitialization(3, &output),
+        ch9344::Error::none);
+    CHECK_EQ(output.count, 3U);
+    for (std::size_t index = 0; index < output.count; ++index) {
+        checkCommand(output.commands[index], portThreeExpected[index], 3);
+    }
+
+    CHECK_EQ(
+        ch9344::encodePortInitialization(0, &output),
+        ch9344::Error::none);
+    CHECK_EQ(output.count, 3U);
+    for (std::size_t index = 0; index < output.count; ++index) {
+        checkCommand(output.commands[index], portZeroExpected[index], 3);
+    }
+}
+
+void testPortInitializationRejectsInvalidInputWithoutWriting()
+{
+    ch9344::CommandSequence output;
+    output.count = 0xa5;
+    output.commands[0].bytes[0] = 0x5a;
+
+    CHECK_EQ(
+        ch9344::encodePortInitialization(4, &output),
+        ch9344::Error::invalidPort);
+    CHECK_EQ(output.count, 0xa5U);
+    CHECK_EQ(output.commands[0].bytes[0], 0x5a);
+    CHECK_EQ(
+        ch9344::encodePortInitialization(0, nullptr),
+        ch9344::Error::invalidArgument);
+}
+
 } // namespace
 
 int main()
@@ -276,5 +405,11 @@ int main()
     testRxRejectsHardwarePortOutsideFourThroughSeven();
     testRxRejectsPayloadLongerThanThirtyBytes();
     testRxValidatesPointersAndAcceptsEmptyInput();
+    testChipVersionDistinguishesLAndQ();
+    testChipVersionRejectsMalformedResponse();
+    testUploadModeCommandForSupportedChipVersions();
+    testOldLChipDoesNotRequireUploadModeCommand();
+    testPortInitializationUsesPerPortRegisterBase();
+    testPortInitializationRejectsInvalidInputWithoutWriting();
     return test_support::failures == 0 ? 0 : 1;
 }
