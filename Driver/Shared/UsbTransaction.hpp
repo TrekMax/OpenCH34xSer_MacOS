@@ -46,6 +46,10 @@ UsbStartupResult initializeUsbTransport(
     std::uint8_t logicalPort,
     std::uint32_t defaultBaudRate);
 
+UsbStartupResult initializeAllPortsUsbTransport(
+    UsbTransactionBackend& backend,
+    std::uint32_t defaultBaudRate);
+
 bool submitCommandSequence(
     UsbTransactionBackend& backend,
     const ch9344::CommandSequence& sequence);

@@ -1,0 +1,53 @@
+#ifndef CH9344Transport_h
+#define CH9344Transport_h
+
+#include <Availability.h>
+#include <DriverKit/IOService.iig>
+#include <USBDriverKit/IOUSBHostPipe.iig>
+
+class CH9344Transport : public IOService
+{
+public:
+    virtual bool init() override;
+    virtual kern_return_t Start(IOService* provider) override;
+    virtual kern_return_t Stop(IOService* provider) override;
+    virtual void free() override;
+
+    virtual void DataInComplete(
+        OSAction* action,
+        IOReturn status,
+        uint32_t actualByteCount,
+        uint64_t completionTimestamp)
+        TYPE(IOUSBHostPipe::CompleteAsyncIO);
+    virtual void DataOutComplete(
+        OSAction* action,
+        IOReturn status,
+        uint32_t actualByteCount,
+        uint64_t completionTimestamp)
+        TYPE(IOUSBHostPipe::CompleteAsyncIO);
+
+    bool IsTransportReady() LOCALONLY;
+    void NotifyTx(uint8_t logicalPort) LOCALONLY;
+    void NotifyRxSpace(uint8_t logicalPort) LOCALONLY;
+    kern_return_t ProgramUART(
+        uint8_t logicalPort,
+        uint32_t baudRate,
+        uint8_t dataBits,
+        uint8_t halfStopBits,
+        uint8_t parity) LOCALONLY;
+    kern_return_t ProgramModemControl(
+        uint8_t logicalPort,
+        bool dtr,
+        bool rts) LOCALONLY;
+
+    kern_return_t CreateSerialPorts() LOCALONLY;
+    void TerminateSerialPorts() LOCALONLY;
+    kern_return_t CreateDataResources() LOCALONLY;
+    void ReleaseDataResources() LOCALONLY;
+    void StartTxLocked() LOCALONLY;
+    void SubmitDataInLocked() LOCALONLY;
+    void DeliverPendingRxLocked() LOCALONLY;
+    void DeactivateTransport() LOCALONLY;
+};
+
+#endif // CH9344Transport_h

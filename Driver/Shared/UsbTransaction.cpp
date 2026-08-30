@@ -40,14 +40,18 @@ bool sendSequence(
     return sequence.count == 0 || backend.drainCommandStatus();
 }
 
-} // namespace
-
-ch9344::driver::UsbStartupResult ch9344::driver::initializeUsbTransport(
-    UsbTransactionBackend& backend,
-    std::uint8_t logicalPort,
+ch9344::driver::UsbStartupResult initializePorts(
+    ch9344::driver::UsbTransactionBackend& backend,
+    std::uint8_t firstLogicalPort,
+    std::uint8_t portCount,
     std::uint32_t defaultBaudRate)
 {
+    using ch9344::driver::UsbStartupError;
     const ch9344::ChipInfo emptyChip {ch9344::ChipVariant::ch9344L, 0};
+    if (portCount == 0 || firstLogicalPort >= 4 ||
+        portCount > 4 - firstLogicalPort) {
+        return {UsbStartupError::protocolError, emptyChip};
+    }
     if (!backend.openInterface()) {
         return {UsbStartupError::openFailed, emptyChip};
     }
@@ -85,41 +89,63 @@ ch9344::driver::UsbStartupResult ch9344::driver::initializeUsbTransport(
         rollback(backend, acquiredPipeCount);
         return {UsbStartupError::commandTransferFailed, chip};
     }
-    if (ch9344::encodePortInitialization(logicalPort, &sequence) !=
-        ch9344::Error::none) {
-        rollback(backend, acquiredPipeCount);
-        return {UsbStartupError::protocolError, chip};
-    }
-    if (!sendSequence(backend, sequence)) {
-        rollback(backend, acquiredPipeCount);
-        return {UsbStartupError::commandTransferFailed, chip};
-    }
-    if (ch9344::encodeUart8N1(
-            chip.variant,
-            logicalPort,
-            defaultBaudRate,
-            &sequence) != ch9344::Error::none) {
-        rollback(backend, acquiredPipeCount);
-        return {UsbStartupError::protocolError, chip};
-    }
-    if (!sendSequence(backend, sequence)) {
-        rollback(backend, acquiredPipeCount);
-        return {UsbStartupError::commandTransferFailed, chip};
-    }
-    if (ch9344::encodeModemControl(
-            logicalPort,
-            false,
-            false,
-            &sequence) != ch9344::Error::none) {
-        rollback(backend, acquiredPipeCount);
-        return {UsbStartupError::protocolError, chip};
-    }
-    if (!sendSequence(backend, sequence)) {
-        rollback(backend, acquiredPipeCount);
-        return {UsbStartupError::commandTransferFailed, chip};
+
+    for (std::uint8_t offset = 0; offset < portCount; ++offset) {
+        const std::uint8_t logicalPort = firstLogicalPort + offset;
+        if (ch9344::encodePortInitialization(logicalPort, &sequence) !=
+            ch9344::Error::none) {
+            rollback(backend, acquiredPipeCount);
+            return {UsbStartupError::protocolError, chip};
+        }
+        if (!sendSequence(backend, sequence)) {
+            rollback(backend, acquiredPipeCount);
+            return {UsbStartupError::commandTransferFailed, chip};
+        }
+        if (ch9344::encodeUart8N1(
+                chip.variant,
+                logicalPort,
+                defaultBaudRate,
+                &sequence) != ch9344::Error::none) {
+            rollback(backend, acquiredPipeCount);
+            return {UsbStartupError::protocolError, chip};
+        }
+        if (!sendSequence(backend, sequence)) {
+            rollback(backend, acquiredPipeCount);
+            return {UsbStartupError::commandTransferFailed, chip};
+        }
+        if (ch9344::encodeModemControl(
+                logicalPort,
+                false,
+                false,
+                &sequence) != ch9344::Error::none) {
+            rollback(backend, acquiredPipeCount);
+            return {UsbStartupError::protocolError, chip};
+        }
+        if (!sendSequence(backend, sequence)) {
+            rollback(backend, acquiredPipeCount);
+            return {UsbStartupError::commandTransferFailed, chip};
+        }
     }
 
     return {UsbStartupError::none, chip};
+}
+
+} // namespace
+
+ch9344::driver::UsbStartupResult ch9344::driver::initializeUsbTransport(
+    UsbTransactionBackend& backend,
+    std::uint8_t logicalPort,
+    std::uint32_t defaultBaudRate)
+{
+    return initializePorts(backend, logicalPort, 1, defaultBaudRate);
+}
+
+ch9344::driver::UsbStartupResult
+ch9344::driver::initializeAllPortsUsbTransport(
+    UsbTransactionBackend& backend,
+    std::uint32_t defaultBaudRate)
+{
+    return initializePorts(backend, 0, 4, defaultBaudRate);
 }
 
 bool ch9344::driver::submitCommandSequence(

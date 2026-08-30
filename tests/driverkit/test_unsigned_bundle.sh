@@ -27,9 +27,9 @@ test "$(plutil -extract CFBundleIdentifier raw "$app/Contents/Info.plist")" = \
     "com.trekmax.OpenCH34xSer"
 test "$(plutil -extract CFBundleIdentifier raw "$dext/Info.plist")" = \
     "com.trekmax.OpenCH34xSer.driver"
-test "$(plutil -extract IOKitPersonalities.CH9344Port4.idVendor raw "$dext/Info.plist")" = \
+test "$(plutil -extract IOKitPersonalities.CH9344Transport.idVendor raw "$dext/Info.plist")" = \
     "6790"
-test "$(plutil -extract IOKitPersonalities.CH9344Port4.idProduct raw "$dext/Info.plist")" = \
+test "$(plutil -extract IOKitPersonalities.CH9344Transport.idProduct raw "$dext/Info.plist")" = \
     "57368"
 
 dependencies="$(otool -L "$dext_executable")"

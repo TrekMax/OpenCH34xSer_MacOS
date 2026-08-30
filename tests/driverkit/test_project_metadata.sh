@@ -22,6 +22,8 @@ for required in \
     "$driver_info" \
     "$driver_entitlements" \
     "$repo_root/Driver/Host/OpenCH34xSerApp.swift" \
+    "$repo_root/Driver/Extension/CH9344Transport.iig" \
+    "$repo_root/Driver/Extension/CH9344Transport.cpp" \
     "$repo_root/Driver/Extension/CH9344Driver.iig" \
     "$repo_root/Driver/Extension/CH9344Driver.cpp"
 do
@@ -46,7 +48,7 @@ plist_value()
 [[ "$(plist_value "$driver_entitlements" 'com\.apple\.developer\.driverkit\.transport\.usb.0.idProduct')" == "57368" ]] || \
     fail "USB entitlement product mismatch"
 
-personality='IOKitPersonalities.CH9344Port4'
+personality='IOKitPersonalities.CH9344Transport'
 [[ "$(plist_value "$driver_info" "$personality.idVendor")" == "6790" ]] || \
     fail "personality vendor mismatch"
 [[ "$(plist_value "$driver_info" "$personality.idProduct")" == "57368" ]] || \
@@ -57,12 +59,22 @@ personality='IOKitPersonalities.CH9344Port4'
     fail "interface mismatch"
 [[ "$(plist_value "$driver_info" "$personality.IOProviderClass")" == "IOUSBHostInterface" ]] || \
     fail "provider class mismatch"
-[[ "$(plist_value "$driver_info" "$personality.IOClass")" == "IOUserSerial" ]] || \
+[[ "$(plist_value "$driver_info" "$personality.IOClass")" == "IOUserService" ]] || \
     fail "kernel proxy class mismatch"
-[[ "$(plist_value "$driver_info" "$personality.IOUserClass")" == "CH9344Driver" ]] || \
+[[ "$(plist_value "$driver_info" "$personality.IOUserClass")" == "CH9344Transport" ]] || \
     fail "DriverKit class mismatch"
-[[ "$(plist_value "$driver_info" "$personality.CH9344LogicalPort")" == "3" ]] || \
-    fail "single-port prototype must publish logical port 3"
+
+for logical_port in 0 1 2 3; do
+    child="$personality.CH9344SerialPort$((logical_port + 1))"
+    [[ "$(plist_value "$driver_info" "$child.IOClass")" == "IOUserSerial" ]] || \
+        fail "port $logical_port kernel proxy class mismatch"
+    [[ "$(plist_value "$driver_info" "$child.IOUserClass")" == "CH9344Driver" ]] || \
+        fail "port $logical_port DriverKit class mismatch"
+    [[ "$(plist_value "$driver_info" "$child.CH9344LogicalPort")" == "$logical_port" ]] || \
+        fail "port $logical_port logical index mismatch"
+    [[ "$(plist_value "$driver_info" "$child.IOTTYSuffix")" == "$((logical_port + 1))" ]] || \
+        fail "port $logical_port tty suffix mismatch"
+done
 
 grep -Fq 'productType = "com.apple.product-type.application";' "$project" || \
     fail "host application target missing"

@@ -138,6 +138,26 @@ void testRollsBackAcquiredPipesWhenLastPipeFails()
     CHECK_EQ(backend.commands.size(), 0U);
 }
 
+void testInitializesAllFourPortsOnOneSharedTransport()
+{
+    FakeUsbBackend backend;
+    const auto result = ch9344::driver::initializeAllPortsUsbTransport(
+        backend, 115200);
+
+    CHECK_EQ(result.error, ch9344::driver::UsbStartupError::none);
+    CHECK_EQ(result.chip.variant, ch9344::ChipVariant::ch9344Q);
+    CHECK_EQ(backend.commands.size(), 45U);
+    CHECK_EQ(backend.drainCount, 13U);
+    CHECK_EQ(backend.commands[1][1], 0x0a);
+    CHECK_EQ(backend.commands[12][1], 0x1a);
+    CHECK_EQ(backend.commands[23][1], 0x2a);
+    CHECK_EQ(backend.commands[34][1], 0x3a);
+    CHECK_EQ(backend.closed, false);
+
+    ch9344::driver::shutdownUsbTransport(backend);
+    CHECK_EQ(backend.closed, true);
+}
+
 void testRejectsShortVersionAndRollsBackAllPipes()
 {
     FakeUsbBackend backend;
@@ -197,6 +217,7 @@ void testSubmitsRuntimeCommandSequenceWithExactLengths()
 int main()
 {
     testInitializesQChipAndKeepsTransportOpen();
+    testInitializesAllFourPortsOnOneSharedTransport();
     testRollsBackAcquiredPipesWhenLastPipeFails();
     testRejectsShortVersionAndRollsBackAllPipes();
     testRejectsShortCommandBeforeDrainingAndRollsBack();

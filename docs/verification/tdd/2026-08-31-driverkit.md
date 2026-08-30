@@ -148,3 +148,45 @@
 - 节点命令：`bash tests/driverkit/test_serial_nodes.sh 1`，退出码 1，结果为期望 1 对、实际 0 对 OpenCH34x 标准串口节点。
 - 当前系统只激活 WCH `cn.wch.CH34xVCPDriver`；该扩展不匹配 `0xe018`，所以仍不会产生 CH9344 节点。
 - 系统验收脚本仅在 `CH9344_ENABLE_DRIVERKIT_SYSTEM_TESTS=ON` 时注册，避免把外部 provisioning 状态混入默认单元/unsigned 回归；获得 profile 并激活后必须显式开启，未通过前本阶段保持阻塞而非 GREEN。
+
+## 阶段 8：共享 transport 与四路串口服务
+
+### RED 1：四路调度与 RX 路由状态
+
+- 命令：`cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCH9344_ENABLE_HARDWARE_TESTS=ON`。
+- 退出码：1。
+- 预期失败：CMake 找不到 `Driver/Shared/PortScheduler.cpp`，新增的四路轮转、无效 mask、游标归一化、交错 RX port mask 和畸形 RX 测试无法生成目标。
+- 判断：失败由四路 scheduler 尚未实现造成，不是测试环境错误。
+
+### GREEN 1
+
+- 命令：`cmake --build build --target ch9344_port_scheduler_tests && ctest --test-dir build -R '^port_scheduler$' --output-on-failure`，退出码 0。
+- 结果：ready port 按游标轮转，繁忙端口不能永久饿死其他端口；RX transfer 先完整校验并一次性生成逻辑端口 mask，后续可逐端口清除已交付位，支持某一路背压时不重复投递其他路。
+
+### RED 2：共享 USB 一次初始化四路
+
+- 命令：`cmake --build build --target ch9344_usb_transaction_tests`。
+- 退出码：2。
+- 预期失败：arm64 链接阶段找不到 `initializeAllPortsUsbTransport(...)`。
+- 判断：测试已要求只打开一次 interface、只获取一组四 endpoint、只执行一次 device initialization，并初始化逻辑端口 0～3。
+
+### GREEN 2
+
+- 命令：`ctest --test-dir build -R '^usb_transaction$' --output-on-failure`，退出码 0。
+- 结果：当前 Q 芯片共享启动产生 45 条精确命令和 13 次 status drain；端口寄存器基址依次为 `0x0a/0x1a/0x2a/0x3a`，失败仍统一逆序回滚 pipe 并关闭 interface。
+
+### RED 3：DriverKit 四子服务元数据
+
+- 命令：`bash tests/driverkit/test_project_metadata.sh`。
+- 退出码：1。
+- 预期失败：缺少 `Driver/Extension/CH9344Transport.iig`。
+- 判断：元数据测试已从单路 prototype 更新为一个 `IOUserService` USB transport 与四个 `IOUserSerial` 子服务，要求 suffix 1～4 和逻辑端口 0～3 一一对应。
+
+### GREEN 3 与 adapter
+
+- transport：`CH9344Transport` 是唯一 `IOUSBHostInterface` owner，集中持有四个 pipe、命令锁、data IN/OUT action 与轮转游标；通过 `IOService::Create()` 从 personality 的四份属性创建 `CH9344Driver` 子服务，任一创建/注册失败会逆序终止全部已创建端口。
+- serial port：四个 `CH9344Driver` 各自映射独立 SerialDriverKit ring，并把 UART/DTR/RTS、TX 通知和 RX 空间通知委托给 transport。data OUT completion 只提交对应端口候选 `txCI`；RX 逐端口交付并保留背压 mask。
+- 生命周期：Stop 先令 transport inactive 并终止四个子服务，再同步 abort 数据 I/O、释放 action/buffer、逆序释放 pipe 并关闭 USB interface；停止后的 completion 不推进任何端口索引。
+- 编译命令：`DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcodebuild -quiet -project Driver/OpenCH34xSer.xcodeproj -scheme OpenCH34xSerHost -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build/DriverKit CODE_SIGNING_ALLOWED=NO clean build`，退出码 0，无编译和静态分析警告。
+- 完整回归：10/10 CTest 通过，包含新增 scheduler、四路共享 USB 初始化、四子服务 metadata、unsigned bundle、宿主生命周期以及真实硬件 inspect/第 4 路 libusb 回环。
+- 系统边界：`test_serial_nodes.sh` 的正式期望已更新为恰好 4 对节点，但因阶段 7 provisioning 阻塞尚不能运行到 GREEN；第 1～3 路未短接，只能在激活后验收节点、配置和路由隔离，不能宣称物理回环。

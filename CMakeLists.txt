@@ -50,6 +50,7 @@ set_tests_properties(endpoint_layout PROPERTIES LABELS protocol)
 
 add_library(ch9344_driver_core STATIC
     Driver/Shared/DriverCore.cpp
+    Driver/Shared/PortScheduler.cpp
     Driver/Shared/UsbTransaction.cpp
 )
 target_include_directories(ch9344_driver_core PUBLIC Driver/Shared)
@@ -74,6 +75,20 @@ target_compile_options(ch9344_driver_core_tests PRIVATE
 
 add_test(NAME driver_core COMMAND ch9344_driver_core_tests)
 set_tests_properties(driver_core PROPERTIES LABELS driverkit)
+
+add_executable(ch9344_port_scheduler_tests
+    tests/driverkit/PortSchedulerTests.cpp
+)
+target_link_libraries(ch9344_port_scheduler_tests PRIVATE ch9344_driver_core)
+target_compile_options(ch9344_port_scheduler_tests PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Werror
+)
+
+add_test(NAME port_scheduler COMMAND ch9344_port_scheduler_tests)
+set_tests_properties(port_scheduler PROPERTIES LABELS driverkit)
 
 add_executable(ch9344_usb_transaction_tests
     tests/driverkit/UsbTransactionTests.cpp
@@ -119,7 +134,7 @@ if(CH9344_ENABLE_DRIVERKIT_SYSTEM_TESTS)
     )
     add_test(
         NAME driverkit_serial_nodes
-        COMMAND bash ${CMAKE_SOURCE_DIR}/tests/driverkit/test_serial_nodes.sh 1
+        COMMAND bash ${CMAKE_SOURCE_DIR}/tests/driverkit/test_serial_nodes.sh 4
     )
     add_test(
         NAME driverkit_port4_tty_loopback

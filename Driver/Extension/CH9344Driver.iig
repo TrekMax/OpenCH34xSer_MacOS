@@ -3,7 +3,6 @@
 
 #include <Availability.h>
 #include <SerialDriverKit/IOUserSerial.iig>
-#include <USBDriverKit/IOUSBHostPipe.iig>
 
 class CH9344Driver : public IOUserSerial
 {
@@ -30,7 +29,6 @@ public:
 
     virtual kern_return_t HwActivate() override;
     virtual kern_return_t HwDeactivate() override;
-
     virtual kern_return_t HwResetFIFO(bool tx, bool rx) override;
     virtual kern_return_t HwSendBreak(bool sendBreak) override;
     virtual kern_return_t HwProgramUART(
@@ -51,25 +49,20 @@ public:
         uint8_t xon,
         uint8_t xoff) override;
 
-    virtual void DataInComplete(
-        OSAction* action,
-        IOReturn status,
-        uint32_t actualByteCount,
-        uint64_t completionTimestamp)
-        TYPE(IOUSBHostPipe::CompleteAsyncIO);
-    virtual void DataOutComplete(
-        OSAction* action,
-        IOReturn status,
-        uint32_t actualByteCount,
-        uint64_t completionTimestamp)
-        TYPE(IOUSBHostPipe::CompleteAsyncIO);
-
-    void StartTx() LOCALONLY;
-    void SubmitDataIn() LOCALONLY;
-    void DeliverPendingRx() LOCALONLY;
-    kern_return_t ActivateTransport() LOCALONLY;
-    void DeactivateTransport() LOCALONLY;
-    void ReleaseDataResources() LOCALONLY;
+    bool ConfigurePort(uint8_t logicalPort) LOCALONLY;
+    bool HasPendingTx() LOCALONLY;
+    bool PrepareTx(
+        uint8_t* output,
+        uint32_t outputCapacity,
+        uint32_t* frameLength,
+        uint32_t* nextConsumer) LOCALONLY;
+    void CompleteTx(
+        bool transferSucceeded,
+        uint32_t expectedLength,
+        uint32_t actualLength,
+        uint32_t candidateConsumer) LOCALONLY;
+    int32_t DeliverRx(const uint8_t* transfer, uint32_t transferLength) LOCALONLY;
+    void ReportRxProtocolError() LOCALONLY;
     void ReleaseQueueMappings() LOCALONLY;
 };
 
