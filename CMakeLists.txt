@@ -48,6 +48,31 @@ target_compile_options(ch9344_endpoint_layout_tests PRIVATE
 add_test(NAME endpoint_layout COMMAND ch9344_endpoint_layout_tests)
 set_tests_properties(endpoint_layout PROPERTIES LABELS protocol)
 
+add_library(ch9344_driver_core STATIC
+    Driver/Shared/DriverCore.cpp
+)
+target_include_directories(ch9344_driver_core PUBLIC Driver/Shared)
+target_compile_options(ch9344_driver_core PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Werror
+)
+
+add_executable(ch9344_driver_core_tests
+    tests/driverkit/DriverCoreTests.cpp
+)
+target_link_libraries(ch9344_driver_core_tests PRIVATE ch9344_driver_core)
+target_compile_options(ch9344_driver_core_tests PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Werror
+)
+
+add_test(NAME driver_core COMMAND ch9344_driver_core_tests)
+set_tests_properties(driver_core PROPERTIES LABELS driverkit)
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
 
