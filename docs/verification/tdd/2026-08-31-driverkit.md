@@ -126,3 +126,25 @@
 - 队列与停止安全：`ConnectQueues` 校验映射、偏移与 ring 大小；断开或停用先同步 abort，再释放映射/缓冲，completion 在 inactive 状态不提交索引。
 - 编译命令：`DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcodebuild -quiet -project Driver/OpenCH34xSer.xcodeproj -scheme OpenCH34xSerHost -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build/DriverKit CODE_SIGNING_ALLOWED=NO clean build`，退出码 0，无编译和静态分析警告。
 - 完整验证：CMake 构建与 8/8 CTest 通过，包含协议、DriverKit、宿主生命周期以及真实 CH9344 inspect/第 4 路 libusb 回环；该硬件回环证明协议未回归，不等同于尚未激活的 `/dev/cu.*` 节点验收。
+
+## 阶段 7：签名、激活与标准串口节点
+
+### GREEN：unsigned bundle 验收
+
+- 命令：`bash tests/driverkit/test_unsigned_bundle.sh`，退出码 0。
+- 结果：脚本在临时 DerivedData 中执行无签名 clean build，确认 Host 内嵌 DEXT、bundle identifier、`0x1a86:0xe018` personality、DriverKit/serial/USB/System Extension entitlement 源配置，并以 `otool -L` 确认 DEXT 只使用原生 DriverKit 相关框架且不链接 libusb。
+
+### RED：签名 provisioning
+
+- 身份检查：`security find-identity -v -p codesigning` 找到 1 个有效身份 `Apple Development: TianShuang Ke (M6D66QWKAN)`。
+- 现有 profile：本机只有 `iOS Team Provisioning Profile: *`，Team `9BT9NV52NL`，不属于工程 Team，且不含 DriverKit entitlement。
+- 不允许自动更新的命令：`xcodebuild ... -derivedDataPath build/DriverKitSigned clean build`，退出码 65；Host 缺少 Mac App Development profile，DEXT 缺少 DriverKit App Development profile。
+- 允许自动更新的命令：`xcodebuild ... -derivedDataPath build/DriverKitSigned -allowProvisioningUpdates clean build`，退出码 65；Xcode 报 `No Accounts: Add a new account in Accounts settings`，并记录旧 keychain credential 缺少 `Xcode-Username`。
+- 判断：代码签名身份存在，但 Xcode 没有可用的 Team 账号，无法创建/下载 Host 与 DriverKit profile。SIP 保持 enabled；未关闭 SIP、未开启未授权的安全绕过，也未把 ad-hoc 签名当成 DriverKit entitlement。
+
+### RED：激活与节点
+
+- 激活命令：`bash tests/driverkit/test_activation.sh`，退出码 1，结果为 `com.trekmax.OpenCH34xSer.driver is not registered`。
+- 节点命令：`bash tests/driverkit/test_serial_nodes.sh 1`，退出码 1，结果为期望 1 对、实际 0 对 OpenCH34x 标准串口节点。
+- 当前系统只激活 WCH `cn.wch.CH34xVCPDriver`；该扩展不匹配 `0xe018`，所以仍不会产生 CH9344 节点。
+- 系统验收脚本仅在 `CH9344_ENABLE_DRIVERKIT_SYSTEM_TESTS=ON` 时注册，避免把外部 provisioning 状态混入默认单元/unsigned 回归；获得 profile 并激活后必须显式开启，未通过前本阶段保持阻塞而非 GREEN。

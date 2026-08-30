@@ -101,6 +101,42 @@ add_test(
 )
 set_tests_properties(host_system_extension_controller PROPERTIES LABELS driverkit)
 
+add_test(
+    NAME driverkit_unsigned_bundle
+    COMMAND bash ${CMAKE_SOURCE_DIR}/tests/driverkit/test_unsigned_bundle.sh
+)
+set_tests_properties(driverkit_unsigned_bundle PROPERTIES LABELS driverkit)
+
+option(
+    CH9344_ENABLE_DRIVERKIT_SYSTEM_TESTS
+    "Enable tests that require an activated and entitled CH9344 DriverKit extension"
+    OFF
+)
+if(CH9344_ENABLE_DRIVERKIT_SYSTEM_TESTS)
+    add_test(
+        NAME driverkit_activation
+        COMMAND bash ${CMAKE_SOURCE_DIR}/tests/driverkit/test_activation.sh
+    )
+    add_test(
+        NAME driverkit_serial_nodes
+        COMMAND bash ${CMAKE_SOURCE_DIR}/tests/driverkit/test_serial_nodes.sh 1
+    )
+    add_test(
+        NAME driverkit_port4_tty_loopback
+        COMMAND python3
+            ${CMAKE_SOURCE_DIR}/tests/driverkit/test_port4_tty_loopback.py
+            /dev/cu.OpenCH34x4
+    )
+    set_tests_properties(
+        driverkit_activation
+        driverkit_serial_nodes
+        driverkit_port4_tty_loopback
+        PROPERTIES
+            LABELS "driverkit;hardware"
+            RESOURCE_LOCK ch9344
+    )
+endif()
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
 
