@@ -169,3 +169,162 @@ ch9344::Error ch9344::encodePortInitialization(
     output->count = 3;
     return Error::none;
 }
+
+ch9344::Error ch9344::encodeUart8N1(
+    ChipVariant variant,
+    uint8_t logicalPort,
+    uint32_t baudRate,
+    CommandSequence* output)
+{
+    if (output == nullptr) {
+        return Error::invalidArgument;
+    }
+
+    uint8_t hardwarePort = 0;
+    const Error portError = mapLogicalPort(logicalPort, &hardwarePort);
+    if (portError != Error::none) {
+        return portError;
+    }
+    if (baudRate == 0 || baudRate > 12000000) {
+        return Error::invalidBaudRate;
+    }
+
+    *output = {};
+    const uint8_t registerBase = static_cast<uint8_t>(
+        0x10 * (hardwarePort - 4) + 0x08);
+    const uint32_t clockRate = baudRate > 115200 ? 44236800 : 1843200;
+    uint32_t divisor = 0;
+    if (baudRate == 2000000) {
+        divisor = 2;
+    } else {
+        uint32_t decimalDivisor = 10 * clockRate / 16 / baudRate;
+        const uint32_t tenths = decimalDivisor % 10;
+        divisor = decimalDivisor / 10;
+        if (tenths >= 5) {
+            ++divisor;
+        }
+    }
+
+    uint8_t baudSelector = 0;
+    switch (baudRate) {
+    case 250000:
+        baudSelector = 1;
+        break;
+    case 500000:
+        baudSelector = 2;
+        break;
+    case 1000000:
+        baudSelector = 3;
+        break;
+    case 1500000:
+        baudSelector = 4;
+        break;
+    case 3000000:
+        baudSelector = 5;
+        break;
+    case 12000000:
+        baudSelector = 6;
+        break;
+    default:
+        break;
+    }
+
+    const uint8_t receiveTimeout = baudRate >= 921600
+        ? 5
+        : static_cast<uint8_t>((15000000 / baudRate) / 100 + 1);
+
+    const uint8_t clockCommand[] = {
+        0x80,
+        static_cast<uint8_t>(registerBase + 0x01),
+        static_cast<uint8_t>(baudRate > 115200 ? 0x51 : 0x50),
+    };
+    const uint8_t lBaudCommand[] = {
+        0x20,
+        static_cast<uint8_t>(registerBase + 0x03),
+        static_cast<uint8_t>(divisor & 0xff),
+        static_cast<uint8_t>((divisor >> 8) & 0xff),
+        baudSelector,
+        0x00,
+    };
+    const uint8_t qBaudCommand[] = {
+        0x20,
+        static_cast<uint8_t>(registerBase + 0x03),
+        0x00,
+        0x00,
+        0x00,
+        static_cast<uint8_t>(baudRate & 0xff),
+        static_cast<uint8_t>((baudRate >> 8) & 0xff),
+        static_cast<uint8_t>((baudRate >> 16) & 0xff),
+        static_cast<uint8_t>((baudRate >> 24) & 0xff),
+    };
+    const uint8_t formatCommand[] = {
+        0xc0,
+        static_cast<uint8_t>(registerBase + 0x03),
+        0x03,
+    };
+    const uint8_t timeoutCommand[] = {
+        static_cast<uint8_t>(0x90 + hardwarePort),
+        0x9c,
+        hardwarePort,
+        receiveTimeout,
+    };
+    const uint8_t controlCommand[] = {
+        0xc0,
+        static_cast<uint8_t>(registerBase + 0x01),
+        0x0f,
+    };
+    const uint8_t readCommand[] = {
+        0x90,
+        0x85,
+        static_cast<uint8_t>(registerBase | 0x06),
+    };
+
+    const auto append = [&](const uint8_t* bytes, std::size_t length) {
+        Command& command = output->commands[output->count++];
+        std::memcpy(command.bytes, bytes, length);
+        command.length = length;
+    };
+    append(clockCommand, sizeof(clockCommand));
+    if (variant == ChipVariant::ch9344L) {
+        append(lBaudCommand, sizeof(lBaudCommand));
+    } else {
+        append(qBaudCommand, sizeof(qBaudCommand));
+    }
+    append(formatCommand, sizeof(formatCommand));
+    append(timeoutCommand, sizeof(timeoutCommand));
+    append(controlCommand, sizeof(controlCommand));
+    append(readCommand, sizeof(readCommand));
+    return Error::none;
+}
+
+ch9344::Error ch9344::encodeModemControl(
+    uint8_t logicalPort,
+    bool dtr,
+    bool rts,
+    CommandSequence* output)
+{
+    if (output == nullptr) {
+        return Error::invalidArgument;
+    }
+
+    uint8_t hardwarePort = 0;
+    const Error portError = mapLogicalPort(logicalPort, &hardwarePort);
+    if (portError != Error::none) {
+        return portError;
+    }
+
+    *output = {};
+    const uint8_t controlRegister = static_cast<uint8_t>(
+        0x10 * (hardwarePort - 4) + 0x0c);
+    const uint8_t commands[][3] = {
+        {0x80, controlRegister, static_cast<uint8_t>(dtr ? 0x01 : 0x00)},
+        {0x80, controlRegister, static_cast<uint8_t>(rts ? 0x11 : 0x10)},
+    };
+
+    for (std::size_t index = 0; index < 2; ++index) {
+        std::memcpy(output->commands[index].bytes, commands[index], 3);
+        output->commands[index].length = 3;
+    }
+    output->count = 2;
+    return Error::none;
+}

@@ -15,6 +15,7 @@ enum class Error {
     invalidRxPort,
     invalidRxLength,
     invalidVersionResponse,
+    invalidBaudRate,
 };
 
 Error mapLogicalPort(uint8_t logicalPort, uint8_t* hardwarePort);
@@ -84,6 +85,18 @@ Error encodeDeviceInitialization(
 
 Error encodePortInitialization(
     uint8_t logicalPort,
+    CommandSequence* output);
+
+Error encodeUart8N1(
+    ChipVariant variant,
+    uint8_t logicalPort,
+    uint32_t baudRate,
+    CommandSequence* output);
+
+Error encodeModemControl(
+    uint8_t logicalPort,
+    bool dtr,
+    bool rts,
     CommandSequence* output);
 
 } // namespace ch9344

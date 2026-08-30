@@ -391,6 +391,157 @@ void testPortInitializationRejectsInvalidInputWithoutWriting()
         ch9344::Error::invalidArgument);
 }
 
+void testLChipEncodes115200EightNOne()
+{
+    const uint8_t expected[][9] = {
+        {0x80, 0x39, 0x50},
+        {0x20, 0x3b, 0x01, 0x00, 0x00, 0x00},
+        {0xc0, 0x3b, 0x03},
+        {0x97, 0x9c, 0x07, 0x02},
+        {0xc0, 0x39, 0x0f},
+        {0x90, 0x85, 0x3e},
+    };
+    const std::size_t lengths[] = {3, 6, 3, 4, 3, 3};
+    ch9344::CommandSequence output;
+
+    CHECK_EQ(
+        ch9344::encodeUart8N1(
+            ch9344::ChipVariant::ch9344L, 3, 115200, &output),
+        ch9344::Error::none);
+    CHECK_EQ(output.count, 6U);
+    for (std::size_t index = 0; index < output.count; ++index) {
+        checkCommand(output.commands[index], expected[index], lengths[index]);
+    }
+}
+
+void testLChipEncodesClockDivisorAndReceiveTimeout()
+{
+    struct Case {
+        uint32_t baudRate;
+        uint8_t clockSelector;
+        uint8_t divisorLow;
+        uint8_t divisorHigh;
+        uint8_t baudSelector;
+        uint8_t receiveTimeout;
+    };
+    const Case cases[] = {
+        {9600, 0x50, 0x0c, 0x00, 0x00, 0x10},
+        {921600, 0x51, 0x03, 0x00, 0x00, 0x05},
+        {250000, 0x51, 0x0b, 0x00, 0x01, 0x01},
+        {500000, 0x51, 0x06, 0x00, 0x02, 0x01},
+        {1000000, 0x51, 0x03, 0x00, 0x03, 0x05},
+        {1500000, 0x51, 0x02, 0x00, 0x04, 0x05},
+        {2000000, 0x51, 0x02, 0x00, 0x00, 0x05},
+        {3000000, 0x51, 0x01, 0x00, 0x05, 0x05},
+        {12000000, 0x51, 0x00, 0x00, 0x06, 0x05},
+    };
+
+    for (const Case& testCase : cases) {
+        ch9344::CommandSequence output;
+        CHECK_EQ(
+            ch9344::encodeUart8N1(
+                ch9344::ChipVariant::ch9344L,
+                3,
+                testCase.baudRate,
+                &output),
+            ch9344::Error::none);
+        CHECK_EQ(output.count, 6U);
+        CHECK_EQ(output.commands[0].bytes[2], testCase.clockSelector);
+        CHECK_EQ(output.commands[1].length, 6U);
+        CHECK_EQ(output.commands[1].bytes[2], testCase.divisorLow);
+        CHECK_EQ(output.commands[1].bytes[3], testCase.divisorHigh);
+        CHECK_EQ(output.commands[1].bytes[4], testCase.baudSelector);
+        CHECK_EQ(output.commands[3].bytes[3], testCase.receiveTimeout);
+    }
+}
+
+void testQChipEncodesBaudRateDirectlyAsLittleEndian()
+{
+    const uint8_t expectedBaudCommand[] = {
+        0x20, 0x3b, 0x00, 0x00, 0x00, 0x00, 0xc2, 0x01, 0x00,
+    };
+    ch9344::CommandSequence output;
+
+    CHECK_EQ(
+        ch9344::encodeUart8N1(
+            ch9344::ChipVariant::ch9344Q, 3, 115200, &output),
+        ch9344::Error::none);
+    CHECK_EQ(output.count, 6U);
+    checkCommand(
+        output.commands[1],
+        expectedBaudCommand,
+        sizeof(expectedBaudCommand));
+}
+
+void testUartEncodingRejectsInvalidInputWithoutWriting()
+{
+    ch9344::CommandSequence output;
+    output.count = 0xa5;
+
+    CHECK_EQ(
+        ch9344::encodeUart8N1(
+            ch9344::ChipVariant::ch9344L, 4, 115200, &output),
+        ch9344::Error::invalidPort);
+    CHECK_EQ(output.count, 0xa5U);
+    CHECK_EQ(
+        ch9344::encodeUart8N1(
+            ch9344::ChipVariant::ch9344L, 0, 0, &output),
+        ch9344::Error::invalidBaudRate);
+    CHECK_EQ(output.count, 0xa5U);
+    CHECK_EQ(
+        ch9344::encodeUart8N1(
+            ch9344::ChipVariant::ch9344L, 0, 12000001, &output),
+        ch9344::Error::invalidBaudRate);
+    CHECK_EQ(output.count, 0xa5U);
+    CHECK_EQ(
+        ch9344::encodeUart8N1(
+            ch9344::ChipVariant::ch9344L, 0, 115200, nullptr),
+        ch9344::Error::invalidArgument);
+}
+
+void testModemControlEncodesDtrAndRtsIndependently()
+{
+    struct Case {
+        bool dtr;
+        bool rts;
+        uint8_t dtrValue;
+        uint8_t rtsValue;
+    };
+    const Case cases[] = {
+        {false, false, 0x00, 0x10},
+        {true, false, 0x01, 0x10},
+        {false, true, 0x00, 0x11},
+        {true, true, 0x01, 0x11},
+    };
+
+    for (const Case& testCase : cases) {
+        ch9344::CommandSequence output;
+        CHECK_EQ(
+            ch9344::encodeModemControl(
+                3, testCase.dtr, testCase.rts, &output),
+            ch9344::Error::none);
+        CHECK_EQ(output.count, 2U);
+        const uint8_t expectedDtr[] = {0x80, 0x3c, testCase.dtrValue};
+        const uint8_t expectedRts[] = {0x80, 0x3c, testCase.rtsValue};
+        checkCommand(output.commands[0], expectedDtr, sizeof(expectedDtr));
+        checkCommand(output.commands[1], expectedRts, sizeof(expectedRts));
+    }
+}
+
+void testModemControlRejectsInvalidInputWithoutWriting()
+{
+    ch9344::CommandSequence output;
+    output.count = 0xa5;
+
+    CHECK_EQ(
+        ch9344::encodeModemControl(4, true, true, &output),
+        ch9344::Error::invalidPort);
+    CHECK_EQ(output.count, 0xa5U);
+    CHECK_EQ(
+        ch9344::encodeModemControl(0, true, true, nullptr),
+        ch9344::Error::invalidArgument);
+}
+
 } // namespace
 
 int main()
@@ -411,5 +562,11 @@ int main()
     testOldLChipDoesNotRequireUploadModeCommand();
     testPortInitializationUsesPerPortRegisterBase();
     testPortInitializationRejectsInvalidInputWithoutWriting();
+    testLChipEncodes115200EightNOne();
+    testLChipEncodesClockDivisorAndReceiveTimeout();
+    testQChipEncodesBaudRateDirectlyAsLittleEndian();
+    testUartEncodingRejectsInvalidInputWithoutWriting();
+    testModemControlEncodesDtrAndRtsIndependently();
+    testModemControlRejectsInvalidInputWithoutWriting();
     return test_support::failures == 0 ? 0 : 1;
 }

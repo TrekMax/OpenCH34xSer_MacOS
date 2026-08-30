@@ -90,3 +90,45 @@
 - 退出码：0
 - 结果：`protocol` 通过，1/1 测试通过；版本、上传模式和三个端口初始化命令全部为绿色。
 - 变异检查：修改 Q 分界 `0x40`、上传阈值 `0x39`、端口寄存器步长或任一命令长度时，字面量测试会失败。
+
+## Task 5：串口配置命令
+
+### RED 1：CH9344L 波特率与 8N1
+
+- 命令：`cmake --build build --target ch9344_protocol_tests`
+- 退出码：2
+- 预期失败：arm64 链接阶段找不到 `ch9344::encodeUart8N1(...)`。
+- 判断：115200 完整六命令、时钟/分频/超时表和非法输入测试已编译，失败由 UART 配置编码尚未实现造成。
+
+### GREEN 1：CH9344L 波特率与 8N1
+
+- 命令：`cmake --build build --target ch9344_protocol_tests && ctest --test-dir build -R '^protocol$' --output-on-failure`
+- 退出码：0
+- 结果：L 型六命令、低/高时钟、分频、特殊选择字节和超时表通过。
+
+### RED 2：CH9344Q 直接波特率
+
+- 命令：`cmake --build build --target ch9344_protocol_tests && ctest --test-dir build -R '^protocol$' --output-on-failure`
+- 退出码：8
+- 预期失败：Q 命令长度实际为 6、预期为 9，且字节 2 实际为 `0x01`、预期为 `0x00`。
+- 判断：失败准确证明 Q 型不能复用 L 型分频命令。
+
+### GREEN 2：CH9344Q 直接波特率
+
+- 命令：`cmake --build build --target ch9344_protocol_tests && ctest --test-dir build -R '^protocol$' --output-on-failure`
+- 退出码：0
+- 结果：Q 型 9 字节命令按小端顺序携带 115200，协议测试恢复绿色。
+
+### RED 3：DTR/RTS 独立控制
+
+- 命令：`cmake --build build --target ch9344_protocol_tests`
+- 退出码：2
+- 预期失败：arm64 链接阶段找不到 `ch9344::encodeModemControl(...)`。
+- 判断：四种 DTR/RTS 布尔组合和越界不写输出测试已编译，失败由 modem control 编码尚未实现造成。
+
+### GREEN 3：DTR/RTS 独立控制
+
+- 命令：`cmake --build build --target ch9344_protocol_tests && ctest --test-dir build --output-on-failure && git diff --check`
+- 退出码：0
+- 结果：`protocol` 通过，1/1 测试通过；L/Q 波特率、8N1、DTR 和 RTS 命令均为绿色。
+- 变异检查：颠倒 Q 波特率端序、修改 8N1 字节 `0x03`、合并 DTR/RTS 值或改变端口 3 控制寄存器 `0x3c` 时，现有测试会失败。
