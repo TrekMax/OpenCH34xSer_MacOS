@@ -18,6 +18,8 @@
 		A0000000000000000000000B /* SystemExtensionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000015 /* SystemExtensionController.swift */; };
 		A0000000000000000000000C /* SystemExtensions.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B00000000000000000000016 /* SystemExtensions.framework */; };
 		A0000000000000000000000D /* Protocol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000017 /* Protocol.cpp */; };
+		A0000000000000000000000E /* DriverKitUsbBackend.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000001A /* DriverKitUsbBackend.cpp */; };
+		A0000000000000000000000F /* UsbTransaction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000001C /* UsbTransaction.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -63,6 +65,10 @@
 		B00000000000000000000016 /* SystemExtensions.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemExtensions.framework; path = System/Library/Frameworks/SystemExtensions.framework; sourceTree = SDKROOT; };
 		B00000000000000000000017 /* Protocol.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Protocol.cpp; path = ../src/protocol/Protocol.cpp; sourceTree = SOURCE_ROOT; };
 		B00000000000000000000018 /* Protocol.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = Protocol.hpp; path = ../include/ch9344/Protocol.hpp; sourceTree = SOURCE_ROOT; };
+		B00000000000000000000019 /* DriverKitUsbBackend.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = DriverKitUsbBackend.hpp; sourceTree = "<group>"; };
+		B0000000000000000000001A /* DriverKitUsbBackend.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DriverKitUsbBackend.cpp; sourceTree = "<group>"; };
+		B0000000000000000000001B /* UsbTransaction.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = UsbTransaction.hpp; sourceTree = "<group>"; };
+		B0000000000000000000001C /* UsbTransaction.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UsbTransaction.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,6 +130,8 @@
 			children = (
 				B00000000000000000000006 /* CH9344Driver.cpp */,
 				B00000000000000000000007 /* CH9344Driver.iig */,
+				B00000000000000000000019 /* DriverKitUsbBackend.hpp */,
+				B0000000000000000000001A /* DriverKitUsbBackend.cpp */,
 				B00000000000000000000008 /* Info.plist */,
 				B00000000000000000000009 /* CH9344Driver.entitlements */,
 			);
@@ -135,6 +143,8 @@
 			children = (
 				B00000000000000000000010 /* DriverCore.hpp */,
 				B00000000000000000000011 /* DriverCore.cpp */,
+				B0000000000000000000001B /* UsbTransaction.hpp */,
+				B0000000000000000000001C /* UsbTransaction.cpp */,
 			);
 			path = Shared;
 			sourceTree = "<group>";
@@ -281,6 +291,8 @@
 				A00000000000000000000002 /* CH9344Driver.cpp in Sources */,
 				A00000000000000000000004 /* DriverCore.cpp in Sources */,
 				A0000000000000000000000D /* Protocol.cpp in Sources */,
+				A0000000000000000000000E /* DriverKitUsbBackend.cpp in Sources */,
+				A0000000000000000000000F /* UsbTransaction.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

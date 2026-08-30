@@ -7,8 +7,10 @@
 class CH9344Driver : public IOUserSerial
 {
 public:
+    virtual bool init() override;
     virtual kern_return_t Start(IOService* provider) override;
     virtual kern_return_t Stop(IOService* provider) override;
+    virtual void free() override;
 
     virtual kern_return_t HwResetFIFO(bool tx, bool rx) override;
     virtual kern_return_t HwSendBreak(bool sendBreak) override;

@@ -66,3 +66,32 @@
 - 结果：Q 型端口 4 的直接波特率字节、8N1 限制、DTR/RTS 与错误边界全部通过。
 - DEXT adapter：`HwProgramUART`、`HwProgramBaudRate`、`HwProgramMCR` 已使用同一协议核心生成命令；在 USB transport 尚未接入时，有效命令返回 `kIOReturnNotReady`，不把“只编码未下发”伪报为成功。
 - 编译验证：协议实现加入 DEXT target；Xcode unsigned clean build 退出码 0、静态分析无警告。为消除 analyzer 对已由长度保护的可空 TX payload 的误报，显式增加 `payload != nullptr` 的 memcpy 守卫，协议行为不变。
+
+## 阶段 5：USBDriverKit transport 和芯片初始化
+
+### RED 1：启动与回滚状态机
+
+- 命令：`cmake --build build --target ch9344_usb_transaction_tests`。
+- 退出码：2。
+- 预期失败：arm64 链接阶段找不到 `initializeUsbTransport(...)` 与 `shutdownUsbTransport(...)`。
+- 判断：fake backend 已锁定 `81/82/01/02` 获取顺序、Q `0x42`、12 条启动命令、4 次 status drain，以及 pipe/短版本/短写逆序回滚，失败由 orchestration 尚未实现造成。
+
+### GREEN 1
+
+- 命令：`cmake --build build --target ch9344_usb_transaction_tests && ctest --test-dir build -R '^usb_transaction$' --output-on-failure`，退出码 0。
+- 结果：成功路径保持 transport 打开；全部失败路径按已获取 pipe 的逆序释放并关闭 interface。
+
+### RED 2：运行时命令提交
+
+- 命令：`cmake --build build --target ch9344_usb_transaction_tests`。
+- 退出码：2。
+- 预期失败：链接阶段找不到 `submitCommandSequence(...)`。
+- 判断：两条 MCR 命令、精确长度、一次 drain 和第二条短写不 drain 测试已编译，失败由运行时提交行为尚未实现造成。
+
+### GREEN 2 与 DriverKit adapter
+
+- 命令：`ctest --test-dir build -R '^usb_transaction$' --output-on-failure`，退出码 0。
+- DEXT `Start`：调用 super 后打开 `IOUSBHostInterface`，创建 512 字节 DriverKit I/O buffer，获取四个 pipe，以 control request `0xc0/0x96` 读取版本，并下发设备、端口 4、115200/8N1、DTR/RTS off 初始化；全部成功后才注册串口服务。
+- DEXT 配置：UART、baud、MCR 命令完整写入 command OUT 且 status drain 成功后才返回 `kIOReturnSuccess`；短写或 USB 错误返回 `kIOReturnIOError`。
+- 生命周期：启动失败和 `Stop` 逆序释放 pipe/buffer 并关闭 interface；`free` 只做兜底释放，不在 provider 已失效后关闭 interface。
+- 编译验证：Xcode unsigned DriverKit build 退出码 0，静态分析无警告。首次 adapter 编译暴露 forward-declared owner 不能转换到 `IOService*`，将 state 的 owner 边界改为框架基类后通过。

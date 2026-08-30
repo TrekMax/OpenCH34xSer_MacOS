@@ -50,6 +50,7 @@ set_tests_properties(endpoint_layout PROPERTIES LABELS protocol)
 
 add_library(ch9344_driver_core STATIC
     Driver/Shared/DriverCore.cpp
+    Driver/Shared/UsbTransaction.cpp
 )
 target_include_directories(ch9344_driver_core PUBLIC Driver/Shared)
 target_link_libraries(ch9344_driver_core PUBLIC ch9344_protocol)
@@ -73,6 +74,20 @@ target_compile_options(ch9344_driver_core_tests PRIVATE
 
 add_test(NAME driver_core COMMAND ch9344_driver_core_tests)
 set_tests_properties(driver_core PROPERTIES LABELS driverkit)
+
+add_executable(ch9344_usb_transaction_tests
+    tests/driverkit/UsbTransactionTests.cpp
+)
+target_link_libraries(ch9344_usb_transaction_tests PRIVATE ch9344_driver_core)
+target_compile_options(ch9344_usb_transaction_tests PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+    -Werror
+)
+
+add_test(NAME usb_transaction COMMAND ch9344_usb_transaction_tests)
+set_tests_properties(usb_transaction PROPERTIES LABELS driverkit)
 
 add_test(
     NAME driverkit_project_metadata
