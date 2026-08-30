@@ -12,6 +12,10 @@
 
 采用“协议验证工具 → 单路 DriverKit 原型 → 四路串口”的分阶段方案。用户态工具不是最终驱动，而是把 USB 协议错误与 DriverKit 生命周期、签名和服务发布错误分离开的可执行证据。
 
+最终产品采用 macOS 原生架构：Swift 宿主 App 使用 System Extensions framework 安装和管理驱动；C++ DriverKit DEXT 使用 USBDriverKit 访问 USB interface 和 Bulk endpoints，并使用 SerialDriverKit 发布标准串口。`cyme --lsusb` 与 `libusb` probe 仅属于开发诊断和协议验收，不会成为最终驱动的运行时依赖。
+
+DEXT 选择 C++ 是由 DriverKit 的公开接口边界决定的：DriverKit 服务是 C++ 类，Xcode 模板使用 C++ 与 `.iig`，`IOUserSerial` 和 `IOUSBHostInterface` 也由 C++ ABI 暴露。Swift 用于宿主 App；Rust 若用于 DEXT 仍需经过 C++/FFI 才能实现 DriverKit 服务，本项目首期不增加该边界。
+
 暂不采用以下路线：
 
 - 不直接从四路 DEXT 开始，因为协议、USB 异步传输和多服务发布会同时进入调试路径；
@@ -56,6 +60,8 @@ DEXT 匹配 `IOUSBHostInterface`、VID `0x1a86`、PID `0xe018`、configuration 1
 - 断开、挂起、恢复和错误后的统一状态复位。
 
 USB completion 不直接执行业务重配置。completion 只归还缓冲区、记录结果并唤醒串行调度路径，避免重入和端口间状态竞争。
+
+共享 transport 使用 DriverKit 公开的 `IOService::Create()`，从 DEXT `Info.plist` 中的四份子服务属性创建端口服务；每份属性固定逻辑端口号和唯一 TTY suffix。任何端口创建失败都必须终止本次 transport 启动并回收已经创建的端口，不能用少于四个节点冒充完整启动。
 
 ### SerialDriverKit 端口服务
 
@@ -182,3 +188,5 @@ USB completion 不直接执行业务重配置。completion 只归还缓冲区、
 - DTR/RTS 命令编码和 USB 下发通过自动化或可复核集成验证；
 - 拔插后节点和状态能够正确恢复；
 - 全部协议测试、构建、相关集成测试和格式检查通过。
+
+协议 probe 完成、单路 DEXT 构建成功或单路节点出现，都只代表中间里程碑；在上述全部条件满足前，不宣称“最终驱动完成”。
