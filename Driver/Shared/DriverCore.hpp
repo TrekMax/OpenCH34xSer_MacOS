@@ -29,7 +29,9 @@ struct RingWriteResult {
 enum class DriverCoreError {
     none,
     invalidArgument,
+    invalidRing,
     unsupportedLineCoding,
+    rxBackpressure,
     protocolError,
 };
 
@@ -67,5 +69,50 @@ DriverCoreError buildModemConfiguration(
     bool dtr,
     bool rts,
     ch9344::CommandSequence* output);
+
+struct TxPumpResult {
+    DriverCoreError error;
+    std::size_t frameLength;
+    std::size_t payloadLength;
+    std::uint32_t nextConsumerIndex;
+};
+
+TxPumpResult prepareTxTransfer(
+    std::uint8_t logicalPort,
+    const std::uint8_t* txRing,
+    std::uint8_t txLogSize,
+    std::uint32_t producerIndex,
+    std::uint32_t consumerIndex,
+    std::size_t maxPacketSize,
+    std::uint8_t* output,
+    std::size_t outputCapacity);
+
+struct TxCompletionResult {
+    bool committed;
+    std::uint32_t nextConsumerIndex;
+};
+
+TxCompletionResult completeTxTransfer(
+    bool active,
+    bool transferSucceeded,
+    std::size_t expectedLength,
+    std::size_t actualLength,
+    std::uint32_t currentConsumerIndex,
+    std::uint32_t candidateConsumerIndex);
+
+struct RxPumpResult {
+    DriverCoreError error;
+    std::size_t bytesWritten;
+    std::uint32_t nextProducerIndex;
+};
+
+RxPumpResult deliverRxTransfer(
+    std::uint8_t targetLogicalPort,
+    const std::uint8_t* transfer,
+    std::size_t transferLength,
+    std::uint8_t* rxRing,
+    std::uint8_t rxLogSize,
+    std::uint32_t producerIndex,
+    std::uint32_t consumerIndex);
 
 } // namespace ch9344::driver

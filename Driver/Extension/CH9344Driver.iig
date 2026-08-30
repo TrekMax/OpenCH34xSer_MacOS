@@ -3,6 +3,7 @@
 
 #include <Availability.h>
 #include <SerialDriverKit/IOUserSerial.iig>
+#include <USBDriverKit/IOUSBHostPipe.iig>
 
 class CH9344Driver : public IOUserSerial
 {
@@ -11,6 +12,24 @@ public:
     virtual kern_return_t Start(IOService* provider) override;
     virtual kern_return_t Stop(IOService* provider) override;
     virtual void free() override;
+
+    virtual kern_return_t ConnectQueues(
+        IOBufferMemoryDescriptor** ifmd,
+        IOMemoryDescriptor** rxqmd,
+        IOMemoryDescriptor** txqmd,
+        IOMemoryDescriptor* in_rxqmd,
+        IOMemoryDescriptor* in_txqmd,
+        uint32_t in_rxqoffset,
+        uint32_t in_txqoffset,
+        uint8_t in_rxqlogsz,
+        uint8_t in_txqlogsz) override;
+    virtual kern_return_t DisconnectQueues() override;
+
+    virtual void TxDataAvailable() override;
+    virtual void RxFreeSpaceAvailable() override;
+
+    virtual kern_return_t HwActivate() override;
+    virtual kern_return_t HwDeactivate() override;
 
     virtual kern_return_t HwResetFIFO(bool tx, bool rx) override;
     virtual kern_return_t HwSendBreak(bool sendBreak) override;
@@ -31,6 +50,27 @@ public:
         uint32_t arg,
         uint8_t xon,
         uint8_t xoff) override;
+
+    virtual void DataInComplete(
+        OSAction* action,
+        IOReturn status,
+        uint32_t actualByteCount,
+        uint64_t completionTimestamp)
+        TYPE(IOUSBHostPipe::CompleteAsyncIO);
+    virtual void DataOutComplete(
+        OSAction* action,
+        IOReturn status,
+        uint32_t actualByteCount,
+        uint64_t completionTimestamp)
+        TYPE(IOUSBHostPipe::CompleteAsyncIO);
+
+    void StartTx() LOCALONLY;
+    void SubmitDataIn() LOCALONLY;
+    void DeliverPendingRx() LOCALONLY;
+    kern_return_t ActivateTransport() LOCALONLY;
+    void DeactivateTransport() LOCALONLY;
+    void ReleaseDataResources() LOCALONLY;
+    void ReleaseQueueMappings() LOCALONLY;
 };
 
 #endif // CH9344Driver_h

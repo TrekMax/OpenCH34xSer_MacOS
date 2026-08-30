@@ -211,6 +211,137 @@ void testBuildsPort4DtrRtsConfiguration()
         ch9344::driver::DriverCoreError::invalidArgument);
 }
 
+void testPreparesWrappedPort4TxWithoutCommittingRingIndex()
+{
+    const std::array<std::uint8_t, 8> ring {{0xa0, 0xa1, 0x02, 0x03, 0x04, 0x05, 0xa6, 0xa7}};
+    std::array<std::uint8_t, 512> output {};
+    const std::uint8_t expected[] = {0x07, 0x04, 0x00, 0xa6, 0xa7, 0xa0, 0xa1};
+
+    const auto result = ch9344::driver::prepareTxTransfer(
+        3,
+        ring.data(),
+        3,
+        2,
+        6,
+        512,
+        output.data(),
+        output.size());
+
+    CHECK_EQ(result.error, ch9344::driver::DriverCoreError::none);
+    CHECK_EQ(result.frameLength, sizeof(expected));
+    CHECK_EQ(result.payloadLength, 4U);
+    CHECK_EQ(result.nextConsumerIndex, 2U);
+    CHECK_BYTES(output.data(), expected, sizeof(expected));
+}
+
+void testEmptyTxDoesNotCreateUsbFrame()
+{
+    const std::array<std::uint8_t, 8> ring {};
+    std::array<std::uint8_t, 512> output {{0xa5}};
+    const auto result = ch9344::driver::prepareTxTransfer(
+        3, ring.data(), 3, 4, 4, 512, output.data(), output.size());
+
+    CHECK_EQ(result.error, ch9344::driver::DriverCoreError::none);
+    CHECK_EQ(result.frameLength, 0U);
+    CHECK_EQ(result.payloadLength, 0U);
+    CHECK_EQ(result.nextConsumerIndex, 4U);
+    CHECK_EQ(output[0], 0xa5);
+}
+
+void testCommitsTxOnlyAfterCompleteActiveUsbWrite()
+{
+    const auto complete = ch9344::driver::completeTxTransfer(
+        true, true, 12, 12, 3, 7);
+    CHECK_EQ(complete.committed, true);
+    CHECK_EQ(complete.nextConsumerIndex, 7U);
+
+    const auto shortWrite = ch9344::driver::completeTxTransfer(
+        true, true, 12, 11, 3, 7);
+    CHECK_EQ(shortWrite.committed, false);
+    CHECK_EQ(shortWrite.nextConsumerIndex, 3U);
+
+    const auto usbError = ch9344::driver::completeTxTransfer(
+        true, false, 12, 12, 3, 7);
+    CHECK_EQ(usbError.committed, false);
+    CHECK_EQ(usbError.nextConsumerIndex, 3U);
+
+    const auto stopped = ch9344::driver::completeTxTransfer(
+        false, true, 12, 12, 3, 7);
+    CHECK_EQ(stopped.committed, false);
+    CHECK_EQ(stopped.nextConsumerIndex, 3U);
+}
+
+void testDeliversOnlyPort4RxAcrossRingWrap()
+{
+    std::array<std::uint8_t, 64> transfer {};
+    transfer[0] = 0x04;
+    transfer[1] = 0x02;
+    transfer[2] = 0x11;
+    transfer[3] = 0x22;
+    transfer[32] = 0x07;
+    transfer[33] = 0x03;
+    transfer[34] = 0xa7;
+    transfer[35] = 0xa0;
+    transfer[36] = 0xa1;
+    std::array<std::uint8_t, 8> ring {};
+
+    const auto result = ch9344::driver::deliverRxTransfer(
+        3,
+        transfer.data(),
+        transfer.size(),
+        ring.data(),
+        3,
+        7,
+        4);
+
+    CHECK_EQ(result.error, ch9344::driver::DriverCoreError::none);
+    CHECK_EQ(result.bytesWritten, 3U);
+    CHECK_EQ(result.nextProducerIndex, 2U);
+    CHECK_EQ(ring[7], 0xa7);
+    CHECK_EQ(ring[0], 0xa0);
+    CHECK_EQ(ring[1], 0xa1);
+}
+
+void testRxBackpressureAndMalformedTransferDoNotModifyRing()
+{
+    std::array<std::uint8_t, 32> transfer {};
+    transfer[0] = 0x07;
+    transfer[1] = 0x03;
+    transfer[2] = 1;
+    transfer[3] = 2;
+    transfer[4] = 3;
+    std::array<std::uint8_t, 8> ring {{0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5, 0xa5}};
+
+    const auto backpressure = ch9344::driver::deliverRxTransfer(
+        3,
+        transfer.data(),
+        transfer.size(),
+        ring.data(),
+        3,
+        2,
+        4);
+    CHECK_EQ(
+        backpressure.error,
+        ch9344::driver::DriverCoreError::rxBackpressure);
+    CHECK_EQ(backpressure.bytesWritten, 0U);
+    CHECK_EQ(backpressure.nextProducerIndex, 2U);
+    CHECK_EQ(ring[2], 0xa5);
+
+    transfer[1] = 31;
+    const auto malformed = ch9344::driver::deliverRxTransfer(
+        3,
+        transfer.data(),
+        transfer.size(),
+        ring.data(),
+        3,
+        7,
+        4);
+    CHECK_EQ(malformed.error, ch9344::driver::DriverCoreError::protocolError);
+    CHECK_EQ(malformed.bytesWritten, 0U);
+    CHECK_EQ(malformed.nextProducerIndex, 7U);
+    CHECK_EQ(ring[7], 0xa5);
+}
+
 } // namespace
 
 int main()
@@ -224,5 +355,10 @@ int main()
     testBuildsQChipPort4EightNOneConfiguration();
     testRejectsUnsupportedLineCodingAndProtocolErrorsWithoutWriting();
     testBuildsPort4DtrRtsConfiguration();
+    testPreparesWrappedPort4TxWithoutCommittingRingIndex();
+    testEmptyTxDoesNotCreateUsbFrame();
+    testCommitsTxOnlyAfterCompleteActiveUsbWrite();
+    testDeliversOnlyPort4RxAcrossRingWrap();
+    testRxBackpressureAndMalformedTransferDoNotModifyRing();
     return test_support::failures == 0 ? 0 : 1;
 }

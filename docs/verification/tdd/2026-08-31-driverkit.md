@@ -95,3 +95,34 @@
 - DEXT 配置：UART、baud、MCR 命令完整写入 command OUT 且 status drain 成功后才返回 `kIOReturnSuccess`；短写或 USB 错误返回 `kIOReturnIOError`。
 - 生命周期：启动失败和 `Stop` 逆序释放 pipe/buffer 并关闭 interface；`free` 只做兜底释放，不在 provider 已失效后关闭 interface。
 - 编译验证：Xcode unsigned DriverKit build 退出码 0，静态分析无警告。首次 adapter 编译暴露 forward-declared owner 不能转换到 `IOService*`，将 state 的 owner 边界改为框架基类后通过。
+
+## 阶段 6：单路 TX/RX 数据泵
+
+### RED 1：USB 帧与 RX 背压
+
+- 命令：`cmake --build build --target ch9344_driver_core_tests`。
+- 退出码：2。
+- 预期失败：arm64 链接阶段找不到 `prepareTxTransfer(...)` 与 `deliverRxTransfer(...)`。
+- 判断：测试已覆盖第 4 路 TX ring 回绕、空 TX、RX 只接收 hardware port 7、RX ring 回绕、背压和畸形 transfer 不改 ring；失败由数据泵纯核心尚未实现造成。
+
+### GREEN 1
+
+- 命令：`cmake --build build --target ch9344_driver_core_tests && ctest --test-dir build -R '^driver_core$' --output-on-failure`，退出码 0。
+- 结果：TX 以 512 字节 USB 上限生成最多 509 字节 payload 的 hardware port 7 帧，只返回候选 consumer index；RX 先完整解析并聚合目标端口数据，容量不足时整体背压，不产生部分写。
+
+### RED 2：USB 完成提交规则
+
+- 命令：`cmake --build build --target ch9344_driver_core_tests`。
+- 退出码：2。
+- 预期失败：arm64 链接阶段找不到 `completeTxTransfer(...)`。
+- 判断：测试已锁定只有 active 且 USB 成功完整写入才提交 `txCI`；短写、USB 错误和停止后的 completion 都必须保留原 consumer index。
+
+### GREEN 2 与 DriverKit adapter
+
+- 单元命令：`ctest --test-dir build -R '^driver_core$' --output-on-failure`，退出码 0。
+- 生命周期修正：依据 `IOUserSerial` 约定，`Start` 现在只保存 provider 并注册服务；USB interface 打开、芯片初始化和异步数据通道创建延迟到 `HwActivate`，`HwDeactivate` 同步取消未完成 I/O 后再释放 buffer/action 和关闭 interface。这取代了阶段 5 原型中在 `Start` 打开 USB 的临时实现。
+- TX：`TxDataAvailable` 从映射后的 ring 组帧；只有 data OUT completion 完整成功才原子更新 `txCI`，然后通知 `TxFreeSpaceAvailable`。失败不提交且不无界重试。
+- RX：data IN 保持单笔异步读取；hardware port 7 数据写入第 4 路 RX ring，空间不足时保留当前 transfer，等待 `RxFreeSpaceAvailable` 后重试；畸形记录报告 framing error 并继续下一笔读取。
+- 队列与停止安全：`ConnectQueues` 校验映射、偏移与 ring 大小；断开或停用先同步 abort，再释放映射/缓冲，completion 在 inactive 状态不提交索引。
+- 编译命令：`DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcodebuild -quiet -project Driver/OpenCH34xSer.xcodeproj -scheme OpenCH34xSerHost -configuration Debug -destination 'platform=macOS,arch=arm64' -derivedDataPath build/DriverKit CODE_SIGNING_ALLOWED=NO clean build`，退出码 0，无编译和静态分析警告。
+- 完整验证：CMake 构建与 8/8 CTest 通过，包含协议、DriverKit、宿主生命周期以及真实 CH9344 inspect/第 4 路 libusb 回环；该硬件回环证明协议未回归，不等同于尚未激活的 `/dev/cu.*` 节点验收。
