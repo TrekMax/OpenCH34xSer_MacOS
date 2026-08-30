@@ -48,7 +48,7 @@ ch9344::driver::RingReadResult ch9344::driver::peekTxRing(
     if (validation != RingError::none) {
         return {validation, 0, consumerIndex};
     }
-    if (output == nullptr && outputCapacity > 0 && maxBytes > 0) {
+    if (output == nullptr) {
         return {RingError::invalidArgument, 0, consumerIndex};
     }
 
@@ -86,7 +86,7 @@ ch9344::driver::RingWriteResult ch9344::driver::writeRxRing(
     if (validation != RingError::none) {
         return {validation, 0, producerIndex};
     }
-    if (input == nullptr && inputLength > 0) {
+    if (input == nullptr) {
         return {RingError::invalidArgument, 0, producerIndex};
     }
 

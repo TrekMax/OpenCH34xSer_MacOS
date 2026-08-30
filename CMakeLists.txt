@@ -73,6 +73,12 @@ target_compile_options(ch9344_driver_core_tests PRIVATE
 add_test(NAME driver_core COMMAND ch9344_driver_core_tests)
 set_tests_properties(driver_core PROPERTIES LABELS driverkit)
 
+add_test(
+    NAME driverkit_project_metadata
+    COMMAND bash ${CMAKE_SOURCE_DIR}/tests/driverkit/test_project_metadata.sh
+)
+set_tests_properties(driverkit_project_metadata PROPERTIES LABELS driverkit)
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
 

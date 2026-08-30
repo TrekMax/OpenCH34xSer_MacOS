@@ -1,0 +1,449 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 55;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A00000000000000000000001 /* OpenCH34xSerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000003 /* OpenCH34xSerApp.swift */; };
+		A00000000000000000000002 /* CH9344Driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000006 /* CH9344Driver.cpp */; };
+		A00000000000000000000003 /* CH9344Driver.iig in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000007 /* CH9344Driver.iig */; };
+		A00000000000000000000004 /* DriverCore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000011 /* DriverCore.cpp */; };
+		A00000000000000000000005 /* DriverKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B00000000000000000000012 /* DriverKit.framework */; };
+		A00000000000000000000006 /* USBDriverKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B00000000000000000000013 /* USBDriverKit.framework */; };
+		A00000000000000000000007 /* SerialDriverKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B00000000000000000000014 /* SerialDriverKit.framework */; };
+		A00000000000000000000008 /* com.trekmax.OpenCH34xSer.driver.dext in Embed System Extensions */ = {isa = PBXBuildFile; fileRef = B00000000000000000000002 /* com.trekmax.OpenCH34xSer.driver.dext */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A00000000000000000000009 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F00000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E00000000000000000000002;
+			remoteInfo = CH9344Driver;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		D00000000000000000000004 /* Embed System Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(SYSTEM_EXTENSIONS_FOLDER_PATH)";
+			dstSubfolderSpec = 16;
+			files = (
+				A00000000000000000000008 /* com.trekmax.OpenCH34xSer.driver.dext in Embed System Extensions */,
+			);
+			name = "Embed System Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		B00000000000000000000001 /* OpenCH34xSerHost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenCH34xSerHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B00000000000000000000002 /* com.trekmax.OpenCH34xSer.driver.dext */ = {isa = PBXFileReference; explicitFileType = "wrapper.driver-extension"; includeInIndex = 0; path = com.trekmax.OpenCH34xSer.driver.dext; sourceTree = BUILT_PRODUCTS_DIR; };
+		B00000000000000000000003 /* OpenCH34xSerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCH34xSerApp.swift; sourceTree = "<group>"; };
+		B00000000000000000000004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B00000000000000000000005 /* OpenCH34xSerHost.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenCH34xSerHost.entitlements; sourceTree = "<group>"; };
+		B00000000000000000000006 /* CH9344Driver.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CH9344Driver.cpp; sourceTree = "<group>"; };
+		B00000000000000000000007 /* CH9344Driver.iig */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.iig; path = CH9344Driver.iig; sourceTree = "<group>"; };
+		B00000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		B00000000000000000000009 /* CH9344Driver.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CH9344Driver.entitlements; sourceTree = "<group>"; };
+		B00000000000000000000010 /* DriverCore.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = DriverCore.hpp; sourceTree = "<group>"; };
+		B00000000000000000000011 /* DriverCore.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DriverCore.cpp; sourceTree = "<group>"; };
+		B00000000000000000000012 /* DriverKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DriverKit.framework; path = System/Library/Frameworks/DriverKit.framework; sourceTree = SDKROOT; };
+		B00000000000000000000013 /* USBDriverKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = USBDriverKit.framework; path = System/Library/Frameworks/USBDriverKit.framework; sourceTree = SDKROOT; };
+		B00000000000000000000014 /* SerialDriverKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SerialDriverKit.framework; path = System/Library/Frameworks/SerialDriverKit.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D00000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D00000000000000000000007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000007 /* SerialDriverKit.framework in Frameworks */,
+				A00000000000000000000006 /* USBDriverKit.framework in Frameworks */,
+				A00000000000000000000005 /* DriverKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		C00000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				C00000000000000000000003 /* Host */,
+				C00000000000000000000004 /* Extension */,
+				C00000000000000000000005 /* Shared */,
+				C00000000000000000000006 /* Frameworks */,
+				C00000000000000000000002 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C00000000000000000000002 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B00000000000000000000001 /* OpenCH34xSerHost.app */,
+				B00000000000000000000002 /* com.trekmax.OpenCH34xSer.driver.dext */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C00000000000000000000003 /* Host */ = {
+			isa = PBXGroup;
+			children = (
+				B00000000000000000000003 /* OpenCH34xSerApp.swift */,
+				B00000000000000000000004 /* Info.plist */,
+				B00000000000000000000005 /* OpenCH34xSerHost.entitlements */,
+			);
+			path = Host;
+			sourceTree = "<group>";
+		};
+		C00000000000000000000004 /* Extension */ = {
+			isa = PBXGroup;
+			children = (
+				B00000000000000000000006 /* CH9344Driver.cpp */,
+				B00000000000000000000007 /* CH9344Driver.iig */,
+				B00000000000000000000008 /* Info.plist */,
+				B00000000000000000000009 /* CH9344Driver.entitlements */,
+			);
+			path = Extension;
+			sourceTree = "<group>";
+		};
+		C00000000000000000000005 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				B00000000000000000000010 /* DriverCore.hpp */,
+				B00000000000000000000011 /* DriverCore.cpp */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		C00000000000000000000006 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				B00000000000000000000012 /* DriverKit.framework */,
+				B00000000000000000000013 /* USBDriverKit.framework */,
+				B00000000000000000000014 /* SerialDriverKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		D00000000000000000000005 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		E00000000000000000000001 /* OpenCH34xSerHost */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F00000000000000000000041 /* Build configuration list for PBXNativeTarget "OpenCH34xSerHost" */;
+			buildPhases = (
+				D00000000000000000000001 /* Sources */,
+				D00000000000000000000002 /* Frameworks */,
+				D00000000000000000000003 /* Resources */,
+				D00000000000000000000004 /* Embed System Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A0000000000000000000000A /* PBXTargetDependency */,
+			);
+			name = OpenCH34xSerHost;
+			productName = OpenCH34xSerHost;
+			productReference = B00000000000000000000001 /* OpenCH34xSerHost.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E00000000000000000000002 /* CH9344Driver */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F00000000000000000000042 /* Build configuration list for PBXNativeTarget "CH9344Driver" */;
+			buildPhases = (
+				D00000000000000000000005 /* Headers */,
+				D00000000000000000000006 /* Sources */,
+				D00000000000000000000007 /* Frameworks */,
+				D00000000000000000000008 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CH9344Driver;
+			productName = com.trekmax.OpenCH34xSer.driver;
+			productReference = B00000000000000000000002 /* com.trekmax.OpenCH34xSer.driver.dext */;
+			productType = "com.apple.product-type.driver-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F00000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					E00000000000000000000001 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					E00000000000000000000002 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+				};
+			};
+			buildConfigurationList = F00000000000000000000040 /* Build configuration list for PBXProject "OpenCH34xSer" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = C00000000000000000000001;
+			productRefGroup = C00000000000000000000002 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E00000000000000000000001 /* OpenCH34xSerHost */,
+				E00000000000000000000002 /* CH9344Driver */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D00000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D00000000000000000000008 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D00000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000001 /* OpenCH34xSerApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D00000000000000000000006 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A00000000000000000000003 /* CH9344Driver.iig in Sources */,
+				A00000000000000000000002 /* CH9344Driver.cpp in Sources */,
+				A00000000000000000000004 /* DriverCore.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A0000000000000000000000A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E00000000000000000000002 /* CH9344Driver */;
+			targetProxy = A00000000000000000000009 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		F00000000000000000000010 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = ("DEBUG=1", "$(inherited)", );
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		F00000000000000000000011 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		F00000000000000000000020 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Host/OpenCH34xSerHost.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = M6D66QWKAN;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Host/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks", );
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.trekmax.OpenCH34xSer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		F00000000000000000000021 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Host/OpenCH34xSerHost.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = M6D66QWKAN;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Host/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks", );
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.trekmax.OpenCH34xSer;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = macosx;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+		F00000000000000000000030 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				AD_HOC_CODE_SIGNING_ALLOWED = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CODE_SIGN_ENTITLEMENTS = Extension/CH9344Driver.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = M6D66QWKAN;
+				DRIVERKIT_DEPLOYMENT_TARGET = 21.0;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Extension/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = com.trekmax.OpenCH34xSer.driver;
+				PRODUCT_NAME = com.trekmax.OpenCH34xSer.driver;
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				SDKROOT = driverkit;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = driverkit;
+			};
+			name = Debug;
+		};
+		F00000000000000000000031 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				AD_HOC_CODE_SIGNING_ALLOWED = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CODE_SIGN_ENTITLEMENTS = Extension/CH9344Driver.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = M6D66QWKAN;
+				DRIVERKIT_DEPLOYMENT_TARGET = 21.0;
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Extension/Info.plist;
+				PRODUCT_BUNDLE_IDENTIFIER = com.trekmax.OpenCH34xSer.driver;
+				PRODUCT_NAME = com.trekmax.OpenCH34xSer.driver;
+				RUN_CLANG_STATIC_ANALYZER = YES;
+				SDKROOT = driverkit;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = driverkit;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F00000000000000000000040 /* Build configuration list for PBXProject "OpenCH34xSer" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (F00000000000000000000010 /* Debug */, F00000000000000000000011 /* Release */, );
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F00000000000000000000041 /* Build configuration list for PBXNativeTarget "OpenCH34xSerHost" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (F00000000000000000000020 /* Debug */, F00000000000000000000021 /* Release */, );
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F00000000000000000000042 /* Build configuration list for PBXNativeTarget "CH9344Driver" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (F00000000000000000000030 /* Debug */, F00000000000000000000031 /* Release */, );
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = F00000000000000000000001 /* Project object */;
+}
