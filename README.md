@@ -37,3 +37,5 @@ build/ch9344-probe loopback --port 4 --baud 115200 --length 509
 ```
 
 硬件测试默认关闭；只有连接目标 CH9344 时才启用 `CH9344_ENABLE_HARDWARE_TESTS`。
+
+当前硬件结果见 [`docs/verification/2026-08-31-port4-loopback.md`](docs/verification/2026-08-31-port4-loopback.md)。下一阶段是第 4 路单路 DriverKit 串口原型。
