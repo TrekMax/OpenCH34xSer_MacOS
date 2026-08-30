@@ -16,3 +16,19 @@
 - 命令：`cmake --build build --target ch9344_protocol_tests && ctest --test-dir build --output-on-failure && git diff --check`
 - 退出码：0
 - 结果：`protocol` 通过，1/1 测试通过，零失败，编译无警告，差异格式检查通过。
+
+## Task 2：发送数据组帧
+
+### RED
+
+- 命令：`cmake --build build --target ch9344_protocol_tests`
+- 退出码：2
+- 预期失败：arm64 链接阶段找不到 `ch9344::encodeTxFrame(...)`。
+- 判断：单帧、61 字节边界和失败时不写缓冲区的测试已编译，失败由组帧行为尚未实现造成。
+
+### GREEN
+
+- 命令：`cmake --build build --target ch9344_protocol_tests && ctest --test-dir build --output-on-failure && git diff --check`
+- 退出码：0
+- 结果：`protocol` 通过，1/1 测试通过；第 4 路帧头、分片边界与输入拒绝测试均为绿色。
+- 重构检查：删除了未由 RED 驱动的超大虚拟包长分支，保留当前 USB 最大包长所需的最小实现。
