@@ -148,3 +148,27 @@
 - 退出码：0
 - 结果：`protocol` 与 `endpoint_layout` 共 2/2 测试通过，真实端点被稳定识别为 Data `0x82/0x02`、Command `0x81/0x01`、最大包长 512。
 - 变异检查：交换端点角色、依赖描述符顺序、接受重复项或忽略 IN/OUT 包长差异时，端点测试会失败。
+
+## Task 7：真实设备检查
+
+### RED
+
+- 命令：`cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug -DCH9344_ENABLE_HARDWARE_TESTS=ON && cmake --build build --target ch9344_probe && ctest --test-dir build -R '^hardware_inspect$' --output-on-failure`
+- 退出码：8（CTest；探针骨架退出码为 2）
+- 预期失败：探针骨架不支持 `inspect`，没有输出设备、端点和芯片版本行。
+- 判断：硬件脚本真实执行已构建程序，失败由 inspect 行为尚未实现造成。
+
+### 集成调试证据
+
+- 首次 GREEN 尝试：设备成功打开，但 `libusb_get_active_config_descriptor` 稳定返回 `LIBUSB_ERROR_NOT_FOUND`。
+- 复现：MacPorts libusb 1.0.26 与 Homebrew libusb 1.0.30 结果相同，排除单一旧版本缺陷。
+- 交叉证据：设备描述符报告一个配置；IORegistry 报告当前配置 1；`cyme -vvvv` 能读取 configuration 1、interface 0 和四个端点。
+- 根因边界：macOS libusb 路径不能为该设备返回 active configuration，但按设备描述符使用配置索引 0 可以读取同一配置。
+- 最小修复：仅将查询替换为 `libusb_get_config_descriptor(device, 0, ...)`，保留后续 interface/端点完整校验。
+
+### GREEN
+
+- 命令：`cmake --build build --target ch9344_probe && ctest --test-dir build -R '^hardware_inspect$' --output-on-failure`
+- 退出码：0
+- 结果：真实硬件测试 1/1 通过；输出确认 CH9344Q `0x42`、Data `0x82/0x02`、Command `0x81/0x01`、包长 512。
+- 回归：`ctest --test-dir build -L protocol --output-on-failure` 为 2/2 通过。

@@ -13,4 +13,22 @@
 
 ## 当前状态
 
-工程基线初始化中。评估、设计、实施计划和验证证据将记录在 `docs/` 下。
+已经完成协议核心、端点分类和用户态 USB `inspect` 工具。当前设备实测为 CH9344Q `0x42`，四个 Bulk 端点的最大包长均为 512。第 4 路硬件回环命令仍在开发中。
+
+评估、设计、实施计划和验证证据记录在 `docs/` 下。
+
+## 本机构建与检查
+
+依赖 CMake、支持 C++17 的 Apple Clang，以及能被 `pkg-config` 找到的 `libusb-1.0`。
+
+```bash
+cmake -S . -B build \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DCH9344_ENABLE_HARDWARE_TESTS=ON
+cmake --build build
+ctest --test-dir build -L protocol --output-on-failure
+ctest --test-dir build -R '^hardware_inspect$' --output-on-failure
+build/ch9344-probe inspect
+```
+
+硬件测试默认关闭；只有连接目标 CH9344 时才启用 `CH9344_ENABLE_HARDWARE_TESTS`。
