@@ -16,6 +16,7 @@ enum class Error {
     invalidRxLength,
     invalidVersionResponse,
     invalidBaudRate,
+    invalidEndpointLayout,
 };
 
 Error mapLogicalPort(uint8_t logicalPort, uint8_t* hardwarePort);

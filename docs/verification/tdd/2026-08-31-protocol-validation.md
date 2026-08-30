@@ -132,3 +132,19 @@
 - 退出码：0
 - 结果：`protocol` 通过，1/1 测试通过；L/Q 波特率、8N1、DTR 和 RTS 命令均为绿色。
 - 变异检查：颠倒 Q 波特率端序、修改 8N1 字节 `0x03`、合并 DTR/RTS 值或改变端口 3 控制寄存器 `0x3c` 时，现有测试会失败。
+
+## Task 6：USB 端点布局
+
+### RED
+
+- 命令：`cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug && cmake --build build --target ch9344_endpoint_layout_tests`
+- 退出码：2
+- 预期失败：arm64 链接阶段找不到 `ch9344::classifyEndpoints(...)`。
+- 判断：真实乱序端点及缺失、重复、非 Bulk、零包长、未知端点号和包长不一致测试均已编译，失败由分类行为尚未实现造成。
+
+### GREEN
+
+- 命令：`cmake --build build && ctest --test-dir build --output-on-failure && git diff --check`
+- 退出码：0
+- 结果：`protocol` 与 `endpoint_layout` 共 2/2 测试通过，真实端点被稳定识别为 Data `0x82/0x02`、Command `0x81/0x01`、最大包长 512。
+- 变异检查：交换端点角色、依赖描述符顺序、接受重复项或忽略 IN/OUT 包长差异时，端点测试会失败。
