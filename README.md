@@ -13,7 +13,7 @@
 
 ## 当前状态
 
-已经完成协议核心、端点分类和用户态 USB `inspect` 工具。当前设备实测为 CH9344Q `0x42`，四个 Bulk 端点的最大包长均为 512。第 4 路硬件回环命令仍在开发中。
+已经完成协议核心、端点分类和用户态 USB 验证工具。当前设备实测为 CH9344Q `0x42`，四个 Bulk 端点的最大包长均为 512。第 4 路已经通过 16 字节二进制载荷与 509 字节边界载荷回环。
 
 评估、设计、实施计划和验证证据记录在 `docs/` 下。
 
@@ -29,6 +29,11 @@ cmake --build build
 ctest --test-dir build -L protocol --output-on-failure
 ctest --test-dir build -R '^hardware_inspect$' --output-on-failure
 build/ch9344-probe inspect
+build/ch9344-probe loopback \
+  --port 4 \
+  --baud 115200 \
+  --payload-hex 00017f80ff4348393334342d544444a5
+build/ch9344-probe loopback --port 4 --baud 115200 --length 509
 ```
 
 硬件测试默认关闭；只有连接目标 CH9344 时才启用 `CH9344_ENABLE_HARDWARE_TESTS`。

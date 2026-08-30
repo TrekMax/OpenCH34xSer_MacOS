@@ -79,4 +79,15 @@ if(CH9344_ENABLE_HARDWARE_TESTS)
         LABELS hardware
         RESOURCE_LOCK ch9344
     )
+
+    add_test(
+        NAME hardware_loopback_port4
+        COMMAND bash
+            ${CMAKE_SOURCE_DIR}/tests/hardware/test_loopback_port4.sh
+            $<TARGET_FILE:ch9344_probe>
+    )
+    set_tests_properties(hardware_loopback_port4 PROPERTIES
+        LABELS hardware
+        RESOURCE_LOCK ch9344
+    )
 endif()
