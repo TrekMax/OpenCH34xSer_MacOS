@@ -50,3 +50,50 @@ ch9344::TxFrameResult ch9344::encodeTxFrame(
 
     return {Error::none, framePayload + 3, framePayload};
 }
+
+ch9344::DecodeResult ch9344::decodeRxTransfer(
+    const uint8_t* input,
+    std::size_t inputLength,
+    RxHandler handler,
+    void* context)
+{
+    if (handler == nullptr) {
+        return {Error::invalidArgument, 0, 0};
+    }
+    if (inputLength == 0) {
+        return {Error::none, 0, 0};
+    }
+    if (input == nullptr) {
+        return {Error::invalidArgument, 0, 0};
+    }
+
+    std::size_t offset = 0;
+    std::size_t recordsDecoded = 0;
+    while (offset < inputLength) {
+        if (inputLength - offset < 32) {
+            return {Error::truncatedRxRecord, recordsDecoded, offset};
+        }
+
+        const uint8_t hardwarePort = input[offset];
+        if (hardwarePort < 4 || hardwarePort > 7) {
+            return {Error::invalidRxPort, recordsDecoded, offset};
+        }
+
+        const uint8_t payloadLength = input[offset + 1];
+        if (payloadLength > 30) {
+            return {Error::invalidRxLength, recordsDecoded, offset};
+        }
+
+        const RxRecordView record {
+            static_cast<uint8_t>(hardwarePort - 4),
+            input + offset + 2,
+            payloadLength,
+        };
+        handler(context, record);
+
+        ++recordsDecoded;
+        offset += 32;
+    }
+
+    return {Error::none, recordsDecoded, offset};
+}
