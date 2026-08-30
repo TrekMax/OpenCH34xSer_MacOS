@@ -79,6 +79,12 @@ add_test(
 )
 set_tests_properties(driverkit_project_metadata PROPERTIES LABELS driverkit)
 
+add_test(
+    NAME host_system_extension_controller
+    COMMAND bash ${CMAKE_SOURCE_DIR}/tests/driverkit/test_host_controller.sh
+)
+set_tests_properties(host_system_extension_controller PROPERTIES LABELS driverkit)
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
 

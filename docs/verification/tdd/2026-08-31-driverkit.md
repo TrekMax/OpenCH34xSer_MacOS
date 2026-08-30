@@ -34,3 +34,19 @@
 - 完整验证：CMake 构建与 6/6 CTest 通过，包含 2 项协议、2 项 DriverKit、2 项真实硬件测试。
 - bundle 结果：DEXT 位于 `OpenCH34xSerHost.app/Contents/Library/SystemExtensions/com.trekmax.OpenCH34xSer.driver.dext`；Mach-O 同时包含 arm64/x86_64，动态依赖仅为 DriverKit、USBDriverKit、SerialDriverKit 和 DriverKit libc++，不依赖 libusb。
 - 调试修正：首次 Xcode 静态分析指出允许空 output/input 的零长度分支仍可能到达 `memcpy`；收紧 ring helper 指针契约后 clean build 警告归零，原有单元测试保持绿色。
+
+## 阶段 3：宿主系统扩展生命周期
+
+### RED
+
+- 命令：`ctest --test-dir build -R '^host_system_extension_controller$' --output-on-failure`。
+- 退出码：8。
+- 预期失败：Swift 测试可编译、可运行，共 10 个行为断言失败；激活/停用请求均未提交，状态保持 `inactive`，版本替换策略始终返回 false。
+- 判断：fake submitter、事件回调和测试 runner 正常，失败由宿主生命周期行为尚未实现造成。
+
+### GREEN
+
+- 命令：`ctest --test-dir build -R '^host_system_extension_controller$' --output-on-failure`，退出码 0。
+- 结果：激活、停用、等待用户批准、成功、失败、重启后完成和拒绝降级全部通过。
+- 原生 adapter：使用 `OSSystemExtensionRequest` 和 `OSSystemExtensionManager`，回调错误保留 NSError domain、code 与描述；相同开发 build 允许替换，低版本 build 被取消。
+- 编译验证：Swift host 显式链接 SystemExtensions.framework，Xcode unsigned clean build 退出码 0、无警告。
