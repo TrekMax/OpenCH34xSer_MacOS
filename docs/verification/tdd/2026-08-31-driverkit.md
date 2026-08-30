@@ -50,3 +50,19 @@
 - 结果：激活、停用、等待用户批准、成功、失败、重启后完成和拒绝降级全部通过。
 - 原生 adapter：使用 `OSSystemExtensionRequest` 和 `OSSystemExtensionManager`，回调错误保留 NSError domain、code 与描述；相同开发 build 允许替换，低版本 build 被取消。
 - 编译验证：Swift host 显式链接 SystemExtensions.framework，Xcode unsigned clean build 退出码 0、无警告。
+
+## 阶段 4：单路 SerialDriverKit 配置入口
+
+### RED
+
+- 命令：`cmake --build build --target ch9344_driver_core_tests`。
+- 退出码：2。
+- 预期失败：arm64 链接阶段找不到 `buildUartConfiguration(...)` 与 `buildModemConfiguration(...)`。
+- 判断：CH9344Q 第 4 路 115200/8N1、DTR/RTS、非法 line coding 和失败不写 output 测试均已编译，失败由配置 adapter 尚未实现造成。
+
+### GREEN
+
+- 命令：`cmake --build build --target ch9344_driver_core_tests && ctest --test-dir build -R '^driver_core$' --output-on-failure`，退出码 0。
+- 结果：Q 型端口 4 的直接波特率字节、8N1 限制、DTR/RTS 与错误边界全部通过。
+- DEXT adapter：`HwProgramUART`、`HwProgramBaudRate`、`HwProgramMCR` 已使用同一协议核心生成命令；在 USB transport 尚未接入时，有效命令返回 `kIOReturnNotReady`，不把“只编码未下发”伪报为成功。
+- 编译验证：协议实现加入 DEXT target；Xcode unsigned clean build 退出码 0、静态分析无警告。为消除 analyzer 对已由长度保护的可空 TX payload 的误报，显式增加 `payload != nullptr` 的 memcpy 守卫，协议行为不变。

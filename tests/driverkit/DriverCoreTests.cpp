@@ -141,6 +141,76 @@ void testRejectsInvalidRingMetadataWithoutWriting()
     CHECK_EQ(output[0], 0x5a);
 }
 
+void testBuildsQChipPort4EightNOneConfiguration()
+{
+    ch9344::CommandSequence output;
+    const std::uint8_t expectedBaud[] = {
+        0x20, 0x3b, 0x00, 0x00, 0x00, 0x00, 0xc2, 0x01, 0x00,
+    };
+
+    CHECK_EQ(
+        ch9344::driver::buildUartConfiguration(
+            ch9344::ChipVariant::ch9344Q,
+            3,
+            115200,
+            8,
+            ch9344::driver::kOneStopBitInHalfBits,
+            ch9344::driver::kParityNone,
+            &output),
+        ch9344::driver::DriverCoreError::none);
+    CHECK_EQ(output.count, 6U);
+    CHECK_EQ(output.commands[1].length, sizeof(expectedBaud));
+    CHECK_BYTES(output.commands[1].bytes, expectedBaud, sizeof(expectedBaud));
+}
+
+void testRejectsUnsupportedLineCodingAndProtocolErrorsWithoutWriting()
+{
+    ch9344::CommandSequence output;
+    output.count = 0xa5;
+    output.commands[0].bytes[0] = 0x5a;
+
+    CHECK_EQ(
+        ch9344::driver::buildUartConfiguration(
+            ch9344::ChipVariant::ch9344Q, 3, 115200, 7, 2, 1, &output),
+        ch9344::driver::DriverCoreError::unsupportedLineCoding);
+    CHECK_EQ(
+        ch9344::driver::buildUartConfiguration(
+            ch9344::ChipVariant::ch9344Q, 3, 115200, 8, 4, 1, &output),
+        ch9344::driver::DriverCoreError::unsupportedLineCoding);
+    CHECK_EQ(
+        ch9344::driver::buildUartConfiguration(
+            ch9344::ChipVariant::ch9344Q, 3, 115200, 8, 2, 2, &output),
+        ch9344::driver::DriverCoreError::unsupportedLineCoding);
+    CHECK_EQ(
+        ch9344::driver::buildUartConfiguration(
+            ch9344::ChipVariant::ch9344Q, 3, 0, 8, 2, 1, &output),
+        ch9344::driver::DriverCoreError::protocolError);
+    CHECK_EQ(
+        ch9344::driver::buildUartConfiguration(
+            ch9344::ChipVariant::ch9344Q, 3, 115200, 8, 2, 1, nullptr),
+        ch9344::driver::DriverCoreError::invalidArgument);
+    CHECK_EQ(output.count, 0xa5U);
+    CHECK_EQ(output.commands[0].bytes[0], 0x5a);
+}
+
+void testBuildsPort4DtrRtsConfiguration()
+{
+    ch9344::CommandSequence output;
+    const std::uint8_t expectedDtr[] = {0x80, 0x3c, 0x01};
+    const std::uint8_t expectedRts[] = {0x80, 0x3c, 0x10};
+
+    CHECK_EQ(
+        ch9344::driver::buildModemConfiguration(3, true, false, &output),
+        ch9344::driver::DriverCoreError::none);
+    CHECK_EQ(output.count, 2U);
+    CHECK_BYTES(output.commands[0].bytes, expectedDtr, sizeof(expectedDtr));
+    CHECK_BYTES(output.commands[1].bytes, expectedRts, sizeof(expectedRts));
+
+    CHECK_EQ(
+        ch9344::driver::buildModemConfiguration(3, true, false, nullptr),
+        ch9344::driver::DriverCoreError::invalidArgument);
+}
+
 } // namespace
 
 int main()
@@ -151,5 +221,8 @@ int main()
     testWritesContiguousAndWrappedRx();
     testRxPreservesOneSlotAndReportsPartialWrite();
     testRejectsInvalidRingMetadataWithoutWriting();
+    testBuildsQChipPort4EightNOneConfiguration();
+    testRejectsUnsupportedLineCodingAndProtocolErrorsWithoutWriting();
+    testBuildsPort4DtrRtsConfiguration();
     return test_support::failures == 0 ? 0 : 1;
 }

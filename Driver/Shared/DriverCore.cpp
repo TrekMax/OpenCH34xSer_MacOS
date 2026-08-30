@@ -109,3 +109,41 @@ ch9344::driver::RingWriteResult ch9344::driver::writeRxRing(
         static_cast<std::uint32_t>((producerIndex + bytesToCopy) & mask),
     };
 }
+
+ch9344::driver::DriverCoreError ch9344::driver::buildUartConfiguration(
+    ch9344::ChipVariant variant,
+    std::uint8_t logicalPort,
+    std::uint32_t baudRate,
+    std::uint8_t dataBits,
+    std::uint8_t halfStopBits,
+    std::uint8_t parity,
+    ch9344::CommandSequence* output)
+{
+    if (output == nullptr) {
+        return DriverCoreError::invalidArgument;
+    }
+    if (dataBits != 8 || halfStopBits != kOneStopBitInHalfBits ||
+        parity != kParityNone) {
+        return DriverCoreError::unsupportedLineCoding;
+    }
+
+    return ch9344::encodeUart8N1(variant, logicalPort, baudRate, output) ==
+            ch9344::Error::none
+        ? DriverCoreError::none
+        : DriverCoreError::protocolError;
+}
+
+ch9344::driver::DriverCoreError ch9344::driver::buildModemConfiguration(
+    std::uint8_t logicalPort,
+    bool dtr,
+    bool rts,
+    ch9344::CommandSequence* output)
+{
+    if (output == nullptr) {
+        return DriverCoreError::invalidArgument;
+    }
+    return ch9344::encodeModemControl(logicalPort, dtr, rts, output) ==
+            ch9344::Error::none
+        ? DriverCoreError::none
+        : DriverCoreError::protocolError;
+}

@@ -1,7 +1,27 @@
 #include <DriverKit/IOLib.h>
 #include <DriverKit/IOUserServer.h>
 
+#include "../Shared/DriverCore.hpp"
 #include "CH9344Driver.h"
+
+namespace {
+
+constexpr std::uint8_t kPrototypeLogicalPort = 3;
+
+kern_return_t mapConfigurationError(ch9344::driver::DriverCoreError error)
+{
+    switch (error) {
+    case ch9344::driver::DriverCoreError::none:
+        return kIOReturnNotReady;
+    case ch9344::driver::DriverCoreError::unsupportedLineCoding:
+        return kIOReturnUnsupported;
+    case ch9344::driver::DriverCoreError::invalidArgument:
+    case ch9344::driver::DriverCoreError::protocolError:
+        return kIOReturnBadArgument;
+    }
+}
+
+} // namespace
 
 kern_return_t IMPL(CH9344Driver, Start)
 {
@@ -32,24 +52,38 @@ kern_return_t IMPL(CH9344Driver, HwSendBreak)
 
 kern_return_t IMPL(CH9344Driver, HwProgramUART)
 {
-    (void)baudRate;
-    (void)nDataBits;
-    (void)nHalfStopBits;
-    (void)parity;
-    return kIOReturnUnsupported;
+    ch9344::CommandSequence commands;
+    return mapConfigurationError(ch9344::driver::buildUartConfiguration(
+        ch9344::ChipVariant::ch9344Q,
+        kPrototypeLogicalPort,
+        baudRate,
+        nDataBits,
+        nHalfStopBits,
+        parity,
+        &commands));
 }
 
 kern_return_t IMPL(CH9344Driver, HwProgramBaudRate)
 {
-    (void)baudRate;
-    return kIOReturnUnsupported;
+    ch9344::CommandSequence commands;
+    return mapConfigurationError(ch9344::driver::buildUartConfiguration(
+        ch9344::ChipVariant::ch9344Q,
+        kPrototypeLogicalPort,
+        baudRate,
+        8,
+        ch9344::driver::kOneStopBitInHalfBits,
+        ch9344::driver::kParityNone,
+        &commands));
 }
 
 kern_return_t IMPL(CH9344Driver, HwProgramMCR)
 {
-    (void)dtr;
-    (void)rts;
-    return kIOReturnUnsupported;
+    ch9344::CommandSequence commands;
+    return mapConfigurationError(ch9344::driver::buildModemConfiguration(
+        kPrototypeLogicalPort,
+        dtr,
+        rts,
+        &commands));
 }
 
 kern_return_t IMPL(CH9344Driver, HwGetModemStatus)

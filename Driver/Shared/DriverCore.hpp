@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include <ch9344/Protocol.hpp>
+
 namespace ch9344::driver {
 
 enum class RingError {
@@ -24,6 +26,16 @@ struct RingWriteResult {
     std::uint32_t nextProducerIndex;
 };
 
+enum class DriverCoreError {
+    none,
+    invalidArgument,
+    unsupportedLineCoding,
+    protocolError,
+};
+
+constexpr std::uint8_t kOneStopBitInHalfBits = 2;
+constexpr std::uint8_t kParityNone = 1;
+
 RingReadResult peekTxRing(
     const std::uint8_t* ring,
     std::uint8_t logSize,
@@ -40,5 +52,20 @@ RingWriteResult writeRxRing(
     std::uint32_t consumerIndex,
     const std::uint8_t* input,
     std::size_t inputLength);
+
+DriverCoreError buildUartConfiguration(
+    ch9344::ChipVariant variant,
+    std::uint8_t logicalPort,
+    std::uint32_t baudRate,
+    std::uint8_t dataBits,
+    std::uint8_t halfStopBits,
+    std::uint8_t parity,
+    ch9344::CommandSequence* output);
+
+DriverCoreError buildModemConfiguration(
+    std::uint8_t logicalPort,
+    bool dtr,
+    bool rts,
+    ch9344::CommandSequence* output);
 
 } // namespace ch9344::driver

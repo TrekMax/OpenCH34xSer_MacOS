@@ -44,7 +44,7 @@ ch9344::TxFrameResult ch9344::encodeTxFrame(
     output[0] = hardwarePort;
     output[1] = static_cast<uint8_t>(framePayload & 0xff);
     output[2] = static_cast<uint8_t>((framePayload >> 8) & 0xff);
-    if (framePayload != 0) {
+    if (framePayload != 0 && payload != nullptr) {
         std::memcpy(output + 3, payload, framePayload);
     }
 

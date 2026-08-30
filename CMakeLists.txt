@@ -52,6 +52,7 @@ add_library(ch9344_driver_core STATIC
     Driver/Shared/DriverCore.cpp
 )
 target_include_directories(ch9344_driver_core PUBLIC Driver/Shared)
+target_link_libraries(ch9344_driver_core PUBLIC ch9344_protocol)
 target_compile_options(ch9344_driver_core PRIVATE
     -Wall
     -Wextra
