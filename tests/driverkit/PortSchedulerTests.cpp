@@ -73,6 +73,52 @@ void testRejectsMalformedRxBeforeDispatch()
     CHECK_EQ(inspection.portMask, 0U);
 }
 
+void testCommandStatusSeparatesRepliesFromTxEmpty()
+{
+    const std::uint8_t status[] = {
+        0x94, 0xa1, 0x07, 0x02, 0, 0, 0, 0, 0, 0, 0, 0,
+        0x97, 0x9c, 0x07, 0x02,
+        0x97, 0x85, 0x3e, 0x02,
+        0x94, 0x00, 0x02,
+        0x95, 0x06, 0x02,
+        0x94, 0x02, 0,
+        0x97, 0x12, 0,
+    };
+    const auto decoded = ch9344::driver::inspectCommandStatus(status, sizeof(status));
+    CHECK_EQ(decoded.valid, true);
+    CHECK_EQ(decoded.txReadyMask, 0b1001U);
+    for (const auto length : {1U, 2U, 11U, 15U, 19U, 31U}) {
+        const auto truncated = ch9344::driver::inspectCommandStatus(status, length);
+        CHECK_EQ(truncated.valid, false);
+        CHECK_EQ(truncated.txReadyMask, 0U);
+    }
+    const std::uint8_t invalidPort[] = {0x93, 0x02, 0};
+    CHECK_EQ(ch9344::driver::inspectCommandStatus(invalidPort, 3).valid, false);
+    const std::uint8_t unknown[] = {0x97, 0xff, 0, 0x97, 0x02, 0};
+    CHECK_EQ(ch9344::driver::inspectCommandStatus(unknown, 6).txReadyMask, 0U);
+    CHECK_EQ(ch9344::driver::inspectCommandStatus(nullptr, 0).valid, true);
+    CHECK_EQ(ch9344::driver::inspectCommandStatus(nullptr, 3).valid, false);
+}
+
+void testTxWaitsForItsOwnUartEmptyNotification()
+{
+    ch9344::driver::TxFlowControl flow {};
+    flow.reset();
+    CHECK_EQ(flow.select(0b1000, 0).found, true);
+    flow.submitted(3);
+    // USB completion frees the host buffer; it grants no UART credit.
+    CHECK_EQ(flow.select(0b1000, 0).found, false);
+    CHECK_EQ(flow.select(0b1001, 0).logicalPort, 0U);
+    flow.ready(0b0001);
+    CHECK_EQ(flow.select(0b1000, 0).found, false);
+    flow.ready(0b1000);
+    CHECK_EQ(flow.select(0b1000, 0).logicalPort, 3U);
+    // Duplicate notifications must not accumulate additional credit.
+    flow.ready(0b1000);
+    flow.submitted(3);
+    CHECK_EQ(flow.select(0b1000, 0).found, false);
+}
+
 } // namespace
 
 int main()
@@ -81,5 +127,7 @@ int main()
     testIgnoresInvalidReadyBitsAndNormalizesCursor();
     testInspectsInterleavedRxPortsOnce();
     testRejectsMalformedRxBeforeDispatch();
+    testCommandStatusSeparatesRepliesFromTxEmpty();
+    testTxWaitsForItsOwnUartEmptyNotification();
     return test_support::failures == 0 ? 0 : 1;
 }

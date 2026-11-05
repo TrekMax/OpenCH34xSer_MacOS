@@ -3,11 +3,12 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 55;
+	objectVersion = 56;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A00000000000000000000001 /* OpenCH34xSerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000003 /* OpenCH34xSerApp.swift */; };
+		A00000000000000000000024 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000024 /* AppIcon.icns */; };
+		A00000000000000000000001 /* OpenCH93xxSerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000003 /* OpenCH93xxSerApp.swift */; };
 		A00000000000000000000002 /* CH9344Driver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000006 /* CH9344Driver.cpp */; };
 		A00000000000000000000003 /* CH9344Driver.iig in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000007 /* CH9344Driver.iig */; };
 		A00000000000000000000004 /* DriverCore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000011 /* DriverCore.cpp */; };
@@ -23,6 +24,8 @@
 		A00000000000000000000010 /* CH9344Transport.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000001D /* CH9344Transport.cpp */; };
 		A00000000000000000000011 /* CH9344Transport.iig in Sources */ = {isa = PBXBuildFile; fileRef = B0000000000000000000001E /* CH9344Transport.iig */; };
 		A00000000000000000000012 /* PortScheduler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000020 /* PortScheduler.cpp */; };
+		A00000000000000000000022 /* CH9344Device.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000022 /* CH9344Device.cpp */; };
+		A00000000000000000000023 /* CH9344Device.iig in Sources */ = {isa = PBXBuildFile; fileRef = B00000000000000000000023 /* CH9344Device.iig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,11 +53,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		B00000000000000000000001 /* OpenCH34xSerHost.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenCH34xSerHost.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B00000000000000000000024 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = Resources/AppIcon.icns; sourceTree = "<group>"; };
+		B00000000000000000000001 /* OpenCH93xxSer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = OpenCH93xxSer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B00000000000000000000002 /* com.trekmax.OpenCH34xSer.driver.dext */ = {isa = PBXFileReference; explicitFileType = "wrapper.driver-extension"; includeInIndex = 0; path = com.trekmax.OpenCH34xSer.driver.dext; sourceTree = BUILT_PRODUCTS_DIR; };
-		B00000000000000000000003 /* OpenCH34xSerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCH34xSerApp.swift; sourceTree = "<group>"; };
+		B00000000000000000000003 /* OpenCH93xxSerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenCH93xxSerApp.swift; sourceTree = "<group>"; };
 		B00000000000000000000004 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		B00000000000000000000005 /* OpenCH34xSerHost.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenCH34xSerHost.entitlements; sourceTree = "<group>"; };
+		B00000000000000000000005 /* OpenCH93xxSer.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OpenCH93xxSer.entitlements; sourceTree = "<group>"; };
 		B00000000000000000000006 /* CH9344Driver.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CH9344Driver.cpp; sourceTree = "<group>"; };
 		B00000000000000000000007 /* CH9344Driver.iig */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.iig; path = CH9344Driver.iig; sourceTree = "<group>"; };
 		B00000000000000000000008 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -76,6 +80,9 @@
 		B0000000000000000000001E /* CH9344Transport.iig */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.iig; path = CH9344Transport.iig; sourceTree = "<group>"; };
 		B0000000000000000000001F /* PortScheduler.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = PortScheduler.hpp; sourceTree = "<group>"; };
 		B00000000000000000000020 /* PortScheduler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PortScheduler.cpp; sourceTree = "<group>"; };
+		B00000000000000000000021 /* CH9344Driver.development.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CH9344Driver.development.entitlements; sourceTree = "<group>"; };
+		B00000000000000000000022 /* CH9344Device.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CH9344Device.cpp; sourceTree = "<group>"; };
+		B00000000000000000000023 /* CH9344Device.iig */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.iig; path = CH9344Device.iig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,7 +122,7 @@
 		C00000000000000000000002 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				B00000000000000000000001 /* OpenCH34xSerHost.app */,
+				B00000000000000000000001 /* OpenCH93xxSer.app */,
 				B00000000000000000000002 /* com.trekmax.OpenCH34xSer.driver.dext */,
 			);
 			name = Products;
@@ -124,10 +131,11 @@
 		C00000000000000000000003 /* Host */ = {
 			isa = PBXGroup;
 			children = (
-				B00000000000000000000003 /* OpenCH34xSerApp.swift */,
+				B00000000000000000000024 /* AppIcon.icns */,
+				B00000000000000000000003 /* OpenCH93xxSerApp.swift */,
 				B00000000000000000000015 /* SystemExtensionController.swift */,
 				B00000000000000000000004 /* Info.plist */,
-				B00000000000000000000005 /* OpenCH34xSerHost.entitlements */,
+				B00000000000000000000005 /* OpenCH93xxSer.entitlements */,
 			);
 			path = Host;
 			sourceTree = "<group>";
@@ -137,12 +145,15 @@
 			children = (
 				B00000000000000000000006 /* CH9344Driver.cpp */,
 				B00000000000000000000007 /* CH9344Driver.iig */,
+				B00000000000000000000022 /* CH9344Device.cpp */,
+				B00000000000000000000023 /* CH9344Device.iig */,
 				B0000000000000000000001D /* CH9344Transport.cpp */,
 				B0000000000000000000001E /* CH9344Transport.iig */,
 				B00000000000000000000019 /* DriverKitUsbBackend.hpp */,
 				B0000000000000000000001A /* DriverKitUsbBackend.cpp */,
 				B00000000000000000000008 /* Info.plist */,
 				B00000000000000000000009 /* CH9344Driver.entitlements */,
+				B00000000000000000000021 /* CH9344Driver.development.entitlements */,
 			);
 			path = Extension;
 			sourceTree = "<group>";
@@ -193,9 +204,9 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		E00000000000000000000001 /* OpenCH34xSerHost */ = {
+		E00000000000000000000001 /* OpenCH93xxSer */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = F00000000000000000000041 /* Build configuration list for PBXNativeTarget "OpenCH34xSerHost" */;
+			buildConfigurationList = F00000000000000000000041 /* Build configuration list for PBXNativeTarget "OpenCH93xxSer" */;
 			buildPhases = (
 				D00000000000000000000001 /* Sources */,
 				D00000000000000000000002 /* Frameworks */,
@@ -207,9 +218,9 @@
 			dependencies = (
 				A0000000000000000000000A /* PBXTargetDependency */,
 			);
-			name = OpenCH34xSerHost;
-			productName = OpenCH34xSerHost;
-			productReference = B00000000000000000000001 /* OpenCH34xSerHost.app */;
+			name = OpenCH93xxSer;
+			productName = OpenCH93xxSer;
+			productReference = B00000000000000000000001 /* OpenCH93xxSer.app */;
 			productType = "com.apple.product-type.application";
 		};
 		E00000000000000000000002 /* CH9344Driver */ = {
@@ -248,7 +259,7 @@
 					};
 				};
 			};
-			buildConfigurationList = F00000000000000000000040 /* Build configuration list for PBXProject "OpenCH34xSer" */;
+			buildConfigurationList = F00000000000000000000040 /* Build configuration list for PBXProject "OpenCH93xxSer" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -261,7 +272,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				E00000000000000000000001 /* OpenCH34xSerHost */,
+				E00000000000000000000001 /* OpenCH93xxSer */,
 				E00000000000000000000002 /* CH9344Driver */,
 			);
 		};
@@ -272,6 +283,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A00000000000000000000024 /* AppIcon.icns in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -289,7 +301,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A00000000000000000000001 /* OpenCH34xSerApp.swift in Sources */,
+				A00000000000000000000001 /* OpenCH93xxSerApp.swift in Sources */,
 				A0000000000000000000000B /* SystemExtensionController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -301,6 +313,8 @@
 				A00000000000000000000003 /* CH9344Driver.iig in Sources */,
 				A00000000000000000000002 /* CH9344Driver.cpp in Sources */,
 				A00000000000000000000011 /* CH9344Transport.iig in Sources */,
+				A00000000000000000000022 /* CH9344Device.cpp in Sources */,
+				A00000000000000000000023 /* CH9344Device.iig in Sources */,
 				A00000000000000000000010 /* CH9344Transport.cpp in Sources */,
 				A00000000000000000000004 /* DriverCore.cpp in Sources */,
 				A00000000000000000000012 /* PortScheduler.cpp in Sources */,
@@ -346,7 +360,10 @@
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PREPROCESSOR_DEFINITIONS = ("DEBUG=1", "$(inherited)", );
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
@@ -393,14 +410,17 @@
 		F00000000000000000000020 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = Host/OpenCH34xSerHost.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Host/OpenCH93xxSer.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = M6D66QWKAN;
+				DEVELOPMENT_TEAM = 9BT9NV52NL;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Host/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks", );
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.trekmax.OpenCH34xSer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -412,14 +432,17 @@
 		F00000000000000000000021 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = Host/OpenCH34xSerHost.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Host/OpenCH93xxSer.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				DEVELOPMENT_TEAM = M6D66QWKAN;
+				DEVELOPMENT_TEAM = 9BT9NV52NL;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = Host/Info.plist;
-				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks", );
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.trekmax.OpenCH34xSer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -433,9 +456,10 @@
 			buildSettings = {
 				AD_HOC_CODE_SIGNING_ALLOWED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
-				CODE_SIGN_ENTITLEMENTS = Extension/CH9344Driver.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Extension/CH9344Driver.development.entitlements;
+				DRIVER_DISPLAY_NAME = "OpenCH93xxSer Driver";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = M6D66QWKAN;
+				DEVELOPMENT_TEAM = 9BT9NV52NL;
 				DRIVERKIT_DEPLOYMENT_TARGET = 21.0;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -456,8 +480,9 @@
 				AD_HOC_CODE_SIGNING_ALLOWED = NO;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_ENTITLEMENTS = Extension/CH9344Driver.entitlements;
+				DRIVER_DISPLAY_NAME = "OpenCH93xxSer Driver";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = M6D66QWKAN;
+				DEVELOPMENT_TEAM = 9BT9NV52NL;
 				DRIVERKIT_DEPLOYMENT_TARGET = 21.0;
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -475,21 +500,30 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		F00000000000000000000040 /* Build configuration list for PBXProject "OpenCH34xSer" */ = {
+		F00000000000000000000040 /* Build configuration list for PBXProject "OpenCH93xxSer" */ = {
 			isa = XCConfigurationList;
-			buildConfigurations = (F00000000000000000000010 /* Debug */, F00000000000000000000011 /* Release */, );
+			buildConfigurations = (
+				F00000000000000000000010 /* Debug */,
+				F00000000000000000000011 /* Release */,
+			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		F00000000000000000000041 /* Build configuration list for PBXNativeTarget "OpenCH34xSerHost" */ = {
+		F00000000000000000000041 /* Build configuration list for PBXNativeTarget "OpenCH93xxSer" */ = {
 			isa = XCConfigurationList;
-			buildConfigurations = (F00000000000000000000020 /* Debug */, F00000000000000000000021 /* Release */, );
+			buildConfigurations = (
+				F00000000000000000000020 /* Debug */,
+				F00000000000000000000021 /* Release */,
+			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 		F00000000000000000000042 /* Build configuration list for PBXNativeTarget "CH9344Driver" */ = {
 			isa = XCConfigurationList;
-			buildConfigurations = (F00000000000000000000030 /* Debug */, F00000000000000000000031 /* Release */, );
+			buildConfigurations = (
+				F00000000000000000000030 /* Debug */,
+				F00000000000000000000031 /* Release */,
+			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};

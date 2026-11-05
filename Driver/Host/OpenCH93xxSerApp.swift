@@ -1,13 +1,15 @@
 import SwiftUI
 
 @main
-struct OpenCH34xSerApp: App {
+struct OpenCH93xxSerApp: App {
     @StateObject private var controller = SystemExtensionController()
+    private let appName = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+        ?? ProcessInfo.processInfo.processName
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(appName) {
             VStack(spacing: 12) {
-                Text("OpenCH34xSer")
+                Text(appName)
                     .font(.title)
                 Text(statusText)
                     .textSelection(.enabled)

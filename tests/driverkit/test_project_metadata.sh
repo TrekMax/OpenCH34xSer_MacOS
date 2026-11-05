@@ -3,9 +3,9 @@
 set -euo pipefail
 
 repo_root=$(cd "$(dirname "$0")/../.." && pwd)
-project="$repo_root/Driver/OpenCH34xSer.xcodeproj/project.pbxproj"
+project="$repo_root/Driver/OpenCH93xxSer.xcodeproj/project.pbxproj"
 host_info="$repo_root/Driver/Host/Info.plist"
-host_entitlements="$repo_root/Driver/Host/OpenCH34xSerHost.entitlements"
+host_entitlements="$repo_root/Driver/Host/OpenCH93xxSer.entitlements"
 driver_info="$repo_root/Driver/Extension/Info.plist"
 driver_entitlements="$repo_root/Driver/Extension/CH9344Driver.entitlements"
 
@@ -21,7 +21,7 @@ for required in \
     "$host_entitlements" \
     "$driver_info" \
     "$driver_entitlements" \
-    "$repo_root/Driver/Host/OpenCH34xSerApp.swift" \
+    "$repo_root/Driver/Host/OpenCH93xxSerApp.swift" \
     "$repo_root/Driver/Extension/CH9344Transport.iig" \
     "$repo_root/Driver/Extension/CH9344Transport.cpp" \
     "$repo_root/Driver/Extension/CH9344Driver.iig" \
@@ -47,6 +47,14 @@ plist_value()
     fail "USB entitlement vendor mismatch"
 [[ "$(plist_value "$driver_entitlements" 'com\.apple\.developer\.driverkit\.transport\.usb.0.idProduct')" == "57368" ]] || \
     fail "USB entitlement product mismatch"
+
+device_personality='IOKitPersonalities.CH9344Device'
+[[ "$(plist_value "$driver_info" "$device_personality.IOProviderClass")" == "IOUSBHostDevice" ]] || \
+    fail "device configuration driver is missing"
+[[ "$(plist_value "$driver_info" "$device_personality.idVendor")" == "6790" ]] || \
+    fail "device configuration vendor mismatch"
+[[ "$(plist_value "$driver_info" "$device_personality.idProduct")" == "57368" ]] || \
+    fail "device configuration product mismatch"
 
 personality='IOKitPersonalities.CH9344Transport'
 [[ "$(plist_value "$driver_info" "$personality.idVendor")" == "6790" ]] || \

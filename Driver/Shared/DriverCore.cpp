@@ -27,7 +27,10 @@ ch9344::driver::RingError validateRing(
     }
 
     const std::uint32_t size = std::uint32_t {1} << logSize;
-    if (producerIndex >= size || consumerIndex >= size) {
+    // SerialPortInterface indices are cumulative uint32_t counters. Only the
+    // memory offset wraps at the ring boundary; one slot remains unused.
+    const std::uint32_t used = producerIndex - consumerIndex;
+    if (used >= size) {
         return ch9344::driver::RingError::invalidIndex;
     }
 
@@ -81,12 +84,13 @@ ch9344::driver::RingReadResult ch9344::driver::peekTxRing(
     }
 
     const std::uint32_t mask = ringSize - 1;
-    const std::size_t available = (producerIndex - consumerIndex) & mask;
+    const std::size_t available = static_cast<std::uint32_t>(producerIndex - consumerIndex);
+    const std::uint32_t consumerOffset = consumerIndex & mask;
     const std::size_t bytesToCopy = std::min({available, outputCapacity, maxBytes});
     const std::size_t firstLength = std::min<std::size_t>(
-        bytesToCopy, ringSize - consumerIndex);
+        bytesToCopy, ringSize - consumerOffset);
     if (firstLength > 0) {
-        std::memcpy(output, ring + consumerIndex, firstLength);
+        std::memcpy(output, ring + consumerOffset, firstLength);
     }
     const std::size_t secondLength = bytesToCopy - firstLength;
     if (secondLength > 0) {
@@ -96,7 +100,7 @@ ch9344::driver::RingReadResult ch9344::driver::peekTxRing(
     return {
         RingError::none,
         bytesToCopy,
-        static_cast<std::uint32_t>((consumerIndex + bytesToCopy) & mask),
+        static_cast<std::uint32_t>(consumerIndex + bytesToCopy),
     };
 }
 
@@ -119,12 +123,14 @@ ch9344::driver::RingWriteResult ch9344::driver::writeRxRing(
     }
 
     const std::uint32_t mask = ringSize - 1;
-    const std::size_t freeSpace = (consumerIndex - producerIndex - 1) & mask;
+    const std::uint32_t used = producerIndex - consumerIndex;
+    const std::size_t freeSpace = ringSize - 1 - used;
+    const std::uint32_t producerOffset = producerIndex & mask;
     const std::size_t bytesToCopy = std::min(inputLength, freeSpace);
     const std::size_t firstLength = std::min<std::size_t>(
-        bytesToCopy, ringSize - producerIndex);
+        bytesToCopy, ringSize - producerOffset);
     if (firstLength > 0) {
-        std::memcpy(ring + producerIndex, input, firstLength);
+        std::memcpy(ring + producerOffset, input, firstLength);
     }
     const std::size_t secondLength = bytesToCopy - firstLength;
     if (secondLength > 0) {
@@ -134,7 +140,7 @@ ch9344::driver::RingWriteResult ch9344::driver::writeRxRing(
     return {
         RingError::none,
         bytesToCopy,
-        static_cast<std::uint32_t>((producerIndex + bytesToCopy) & mask),
+        static_cast<std::uint32_t>(producerIndex + bytesToCopy),
     };
 }
 
@@ -290,8 +296,8 @@ ch9344::driver::RxPumpResult ch9344::driver::deliverRxTransfer(
         return {DriverCoreError::protocolError, 0, producerIndex};
     }
 
-    const std::uint32_t mask = ringSize - 1;
-    const std::size_t freeSpace = (consumerIndex - producerIndex - 1) & mask;
+    const std::uint32_t used = producerIndex - consumerIndex;
+    const std::size_t freeSpace = ringSize - 1 - used;
     if (collector.length > freeSpace) {
         return {DriverCoreError::rxBackpressure, 0, producerIndex};
     }

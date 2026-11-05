@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "E00000000000000000000001"
-               BuildableName = "OpenCH34xSerHost.app"
-               BlueprintName = "OpenCH34xSerHost"
-               ReferencedContainer = "container:OpenCH34xSer.xcodeproj">
+               BuildableName = "OpenCH93xxSer.app"
+               BlueprintName = "OpenCH93xxSer"
+               ReferencedContainer = "container:OpenCH93xxSer.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -42,9 +42,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E00000000000000000000001"
-            BuildableName = "OpenCH34xSerHost.app"
-            BlueprintName = "OpenCH34xSerHost"
-            ReferencedContainer = "container:OpenCH34xSer.xcodeproj">
+            BuildableName = "OpenCH93xxSer.app"
+            BlueprintName = "OpenCH93xxSer"
+            ReferencedContainer = "container:OpenCH93xxSer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -58,9 +58,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "E00000000000000000000001"
-            BuildableName = "OpenCH34xSerHost.app"
-            BlueprintName = "OpenCH34xSerHost"
-            ReferencedContainer = "container:OpenCH34xSer.xcodeproj">
+            BuildableName = "OpenCH93xxSer.app"
+            BlueprintName = "OpenCH93xxSer"
+            ReferencedContainer = "container:OpenCH93xxSer.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

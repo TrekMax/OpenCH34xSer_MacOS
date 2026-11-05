@@ -20,6 +20,24 @@ TxPortSelection selectNextTxPort(
     std::uint8_t readyMask,
     std::uint8_t cursor);
 
+struct TxFlowControl {
+    std::uint8_t readyMask;
+
+    void reset();
+    TxPortSelection select(std::uint8_t pendingMask, std::uint8_t cursor) const;
+    void submitted(std::uint8_t logicalPort);
+    void ready(std::uint8_t portMask);
+};
+
+struct CommandStatusInspection {
+    bool valid;
+    std::uint8_t txReadyMask;
+};
+
+CommandStatusInspection inspectCommandStatus(
+    const std::uint8_t* transfer,
+    std::size_t transferLength);
+
 struct RxPortInspection {
     ch9344::Error error;
     std::uint8_t portMask;
