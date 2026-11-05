@@ -6,6 +6,7 @@ import os
 import plistlib
 import stat
 import subprocess
+import sys
 
 
 def serial_nodes():
@@ -40,6 +41,13 @@ def main():
     parser.add_argument("--port", type=int, choices=range(1, 5), help="print callout node only")
     args = parser.parse_args()
     ports = serial_nodes()
+    if not ports:
+        print(
+            "未找到 CH9344 驱动的串口节点。请连接设备；"
+            "若已连接，请确认驱动已激活并重新插拔。",
+            file=sys.stderr,
+        )
+        return 1
     if len(ports) != args.expected_count:
         raise ValueError(f"expected {args.expected_count} ports, found {len(ports)}")
     if args.port:
@@ -48,7 +56,8 @@ def main():
         for index, nodes in sorted(ports.items()):
             print(f"port {index + 1}: {nodes[0]}  {nodes[1]}")
         print(f"PASS {len(ports)} driver-owned serial node pairs")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
