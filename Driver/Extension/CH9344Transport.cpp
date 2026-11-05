@@ -64,10 +64,14 @@ struct CH9344Transport_IVars {
     IOLock* lock;
     IOBufferMemoryDescriptor* dataInBuffer;
     IOBufferMemoryDescriptor* dataOutBuffer;
+    IOBufferMemoryDescriptor* statusInBuffer;
     IOAddressSegment dataInRange;
     IOAddressSegment dataOutRange;
+    IOAddressSegment statusInRange;
     OSAction* dataInAction;
     OSAction* dataOutAction;
+    OSAction* statusInAction;
+    ch9344::driver::TxFlowControl txFlow;
     std::uint32_t rxTransferLength;
     std::uint32_t txFrameLength;
     std::uint32_t txNextConsumer;
@@ -78,6 +82,7 @@ struct CH9344Transport_IVars {
     bool active;
     bool dataInPending;
     bool dataOutPending;
+    bool statusInPending;
     bool rxTransferWaiting;
 };
 
@@ -128,6 +133,16 @@ kern_return_t IMPL(CH9344Transport, Start)
     }
     ivars->transportReady = true;
     ivars->active = true;
+    ivars->txFlow.reset();
+    ivars->usb.asyncStatusReader = true;
+
+    IOLockLock(ivars->lock);
+    result = SubmitStatusInLocked();
+    IOLockUnlock(ivars->lock);
+    if (result != kIOReturnSuccess) {
+        DeactivateTransport();
+        return result;
+    }
 
     result = CreateSerialPorts();
     if (result == kIOReturnSuccess) {
@@ -147,12 +162,15 @@ kern_return_t IMPL(CH9344Transport, Start)
 
 kern_return_t IMPL(CH9344Transport, Stop)
 {
+    os_log(OS_LOG_DEFAULT, "CH9344Transport Stop begin");
     if (ivars != nullptr) {
         IOLockLock(ivars->lock);
         ivars->active = false;
         IOLockUnlock(ivars->lock);
         TerminateSerialPorts();
+        os_log(OS_LOG_DEFAULT, "CH9344Transport Stop children terminated");
         DeactivateTransport();
+        os_log(OS_LOG_DEFAULT, "CH9344Transport Stop USB deactivated");
     }
     return Stop(provider, SUPERDISPATCH);
 }
@@ -213,7 +231,9 @@ void CH9344Transport::TerminateSerialPorts()
     for (std::size_t index = ch9344::driver::kPortCount; index > 0; --index) {
         CH9344Driver*& port = ivars->ports[index - 1];
         if (port != nullptr) {
-            port->Terminate(0);
+            os_log(OS_LOG_DEFAULT, "CH9344Transport Terminate port %zu begin", index - 1);
+            const kern_return_t result = port->Terminate(0);
+            os_log(OS_LOG_DEFAULT, "CH9344Transport Terminate port %zu returned 0x%x", index - 1, result);
             OSSafeReleaseNULL(port);
         }
     }
@@ -227,9 +247,17 @@ kern_return_t CH9344Transport::CreateDataResources()
         &ivars->dataInBuffer);
     if (result == kIOReturnSuccess) {
         result = ivars->usb.interface->CreateIOBuffer(
-            kIOMemoryDirectionOut,
+            // The driver writes the frame before the USB controller reads it.
+            // Out-only memory is mapped read-only in the driver process.
+            kIOMemoryDirectionOutIn,
             kDataBufferCapacity,
             &ivars->dataOutBuffer);
+    }
+    if (result == kIOReturnSuccess) {
+        result = ivars->usb.interface->CreateIOBuffer(
+            kIOMemoryDirectionIn,
+            kDataBufferCapacity,
+            &ivars->statusInBuffer);
     }
     if (result == kIOReturnSuccess) {
         result = ivars->dataInBuffer->GetAddressRange(&ivars->dataInRange);
@@ -237,11 +265,16 @@ kern_return_t CH9344Transport::CreateDataResources()
     if (result == kIOReturnSuccess) {
         result = ivars->dataOutBuffer->GetAddressRange(&ivars->dataOutRange);
     }
+    if (result == kIOReturnSuccess) {
+        result = ivars->statusInBuffer->GetAddressRange(&ivars->statusInRange);
+    }
     if (result == kIOReturnSuccess &&
         (ivars->dataInRange.address == 0 ||
          ivars->dataInRange.length < kDataBufferCapacity ||
          ivars->dataOutRange.address == 0 ||
-         ivars->dataOutRange.length < kDataBufferCapacity)) {
+         ivars->dataOutRange.length < kDataBufferCapacity ||
+         ivars->statusInRange.address == 0 ||
+         ivars->statusInRange.length < kDataBufferCapacity)) {
         result = kIOReturnNoMemory;
     }
     if (result == kIOReturnSuccess) {
@@ -249,6 +282,9 @@ kern_return_t CH9344Transport::CreateDataResources()
     }
     if (result == kIOReturnSuccess) {
         result = CreateActionDataOutComplete(0, &ivars->dataOutAction);
+    }
+    if (result == kIOReturnSuccess) {
+        result = CreateActionStatusInComplete(0, &ivars->statusInAction);
     }
     if (result != kIOReturnSuccess) {
         ReleaseDataResources();
@@ -262,11 +298,14 @@ void CH9344Transport::ReleaseDataResources()
         return;
     }
     OSSafeReleaseNULL(ivars->dataOutAction);
+    OSSafeReleaseNULL(ivars->statusInAction);
     OSSafeReleaseNULL(ivars->dataInAction);
     OSSafeReleaseNULL(ivars->dataOutBuffer);
+    OSSafeReleaseNULL(ivars->statusInBuffer);
     OSSafeReleaseNULL(ivars->dataInBuffer);
     ivars->dataInRange = {};
     ivars->dataOutRange = {};
+    ivars->statusInRange = {};
 }
 
 bool CH9344Transport::IsTransportReady()
@@ -383,7 +422,7 @@ void CH9344Transport::StartTxLocked()
             readyMask |= static_cast<std::uint8_t>(1U << port);
         }
     }
-    const auto selection = ch9344::driver::selectNextTxPort(
+    const auto selection = ivars->txFlow.select(
         readyMask, ivars->txCursor);
     if (!selection.found) {
         return;
@@ -408,6 +447,7 @@ void CH9344Transport::StartTxLocked()
     ivars->txFrameLength = frameLength;
     ivars->txNextConsumer = nextConsumer;
     ivars->dataOutPending = true;
+    ivars->txFlow.submitted(selection.logicalPort);
     const kern_return_t result = ivars->usb.dataOut->AsyncIO(
         ivars->dataOutBuffer,
         frameLength,
@@ -415,7 +455,65 @@ void CH9344Transport::StartTxLocked()
         kDataTransferTimeoutMilliseconds);
     if (result != kIOReturnSuccess) {
         ivars->dataOutPending = false;
+        ivars->txFlow.ready(static_cast<std::uint8_t>(1U << selection.logicalPort));
+        os_log(OS_LOG_DEFAULT, "CH9344Transport TX submission failed 0x%x", result);
     }
+}
+
+kern_return_t CH9344Transport::SubmitStatusInLocked()
+{
+    if (!ivars->active || !ivars->transportReady || ivars->statusInPending ||
+        ivars->statusInBuffer == nullptr || ivars->usb.commandIn == nullptr ||
+        ivars->statusInAction == nullptr) {
+        return kIOReturnNotReady;
+    }
+    kern_return_t result = ivars->statusInBuffer->SetLength(kDataBufferCapacity);
+    if (result != kIOReturnSuccess) {
+        return result;
+    }
+    ivars->statusInPending = true;
+    result = ivars->usb.commandIn->AsyncIO(
+        ivars->statusInBuffer, kDataBufferCapacity, ivars->statusInAction, 0);
+    if (result != kIOReturnSuccess) {
+        ivars->statusInPending = false;
+        os_log(OS_LOG_DEFAULT, "CH9344Transport status submission failed 0x%x", result);
+    }
+    return result;
+}
+
+void IMPL(CH9344Transport, StatusInComplete)
+{
+    (void)action;
+    (void)completionTimestamp;
+    if (ivars == nullptr) {
+        return;
+    }
+    IOLockLock(ivars->lock);
+    ivars->statusInPending = false;
+    if (!ivars->active) {
+        IOLockUnlock(ivars->lock);
+        return;
+    }
+    if (status != kIOReturnSuccess || actualByteCount > kDataBufferCapacity) {
+        os_log(OS_LOG_DEFAULT, "CH9344Transport status completion failed 0x%x bytes %u", status, actualByteCount);
+        ivars->transportReady = false;
+        IOLockUnlock(ivars->lock);
+        return;
+    }
+    const auto inspection = ch9344::driver::inspectCommandStatus(
+        reinterpret_cast<const std::uint8_t*>(ivars->statusInRange.address),
+        actualByteCount);
+    if (inspection.valid) {
+        ivars->txFlow.ready(inspection.txReadyMask);
+    } else {
+        os_log(OS_LOG_DEFAULT, "CH9344Transport invalid status record bytes %u", actualByteCount);
+    }
+    if (SubmitStatusInLocked() == kIOReturnSuccess) {
+        StartTxLocked();
+    } else {
+        ivars->transportReady = false;
+    }
+    IOLockUnlock(ivars->lock);
 }
 
 void CH9344Transport::SubmitDataInLocked()
@@ -537,6 +635,8 @@ void IMPL(CH9344Transport, DataOutComplete)
     }
     if (succeeded) {
         StartTxLocked();
+    } else {
+        os_log(OS_LOG_DEFAULT, "CH9344Transport TX completion failed 0x%x bytes %u expected %u", status, actualByteCount, ivars->txFrameLength);
     }
     IOLockUnlock(ivars->lock);
 }
@@ -550,24 +650,36 @@ void CH9344Transport::DeactivateTransport()
     ivars->active = false;
     const bool abortIn = ivars->dataInPending;
     const bool abortOut = ivars->dataOutPending;
+    const bool abortStatus = ivars->statusInPending;
     IOLockUnlock(ivars->lock);
 
     if (ivars->usb.dataIn != nullptr && abortIn) {
+        os_log(OS_LOG_DEFAULT, "CH9344Transport Abort IN begin");
         ivars->usb.dataIn->Abort(
             kIOUSBAbortSynchronous,
             kIOReturnAborted,
             nullptr);
+        os_log(OS_LOG_DEFAULT, "CH9344Transport Abort IN end");
     }
     if (ivars->usb.dataOut != nullptr && abortOut) {
+        os_log(OS_LOG_DEFAULT, "CH9344Transport Abort OUT begin");
         ivars->usb.dataOut->Abort(
             kIOUSBAbortSynchronous,
             kIOReturnAborted,
             nullptr);
+        os_log(OS_LOG_DEFAULT, "CH9344Transport Abort OUT end");
+    }
+    if (ivars->usb.commandIn != nullptr && abortStatus) {
+        os_log(OS_LOG_DEFAULT, "CH9344Transport Abort status IN begin");
+        ivars->usb.commandIn->Abort(kIOUSBAbortSynchronous, kIOReturnAborted, nullptr);
+        os_log(OS_LOG_DEFAULT, "CH9344Transport Abort status IN end");
     }
 
     IOLockLock(ivars->lock);
     ivars->dataInPending = false;
     ivars->dataOutPending = false;
+    ivars->statusInPending = false;
+    ivars->usb.asyncStatusReader = false;
     ivars->rxTransferWaiting = false;
     ivars->rxPendingMask = 0;
     ivars->transportReady = false;

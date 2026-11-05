@@ -31,12 +31,12 @@ void testReadsWrappedTxAndHonorsOutputCapacity()
     std::array<std::uint8_t, 3> output {};
 
     const auto result = ch9344::driver::peekTxRing(
-        ring.data(), 3, 2, 6, output.data(), output.size(), 7);
+        ring.data(), 3, 10, 6, output.data(), output.size(), 7);
     const std::uint8_t expected[] = {0xa6, 0xa7, 0xa0};
 
     CHECK_EQ(result.error, RingError::none);
     CHECK_EQ(result.bytesCopied, 3U);
-    CHECK_EQ(result.nextConsumerIndex, 1U);
+    CHECK_EQ(result.nextConsumerIndex, 9U);
     CHECK_BYTES(output.data(), expected, sizeof(expected));
 }
 
@@ -60,11 +60,11 @@ void testWritesContiguousAndWrappedRx()
     std::array<std::uint8_t, 8> contiguous {};
     const std::uint8_t first[] = {0x11, 0x22};
     const auto firstResult = ch9344::driver::writeRxRing(
-        contiguous.data(), 3, 1, 5, first, sizeof(first));
+        contiguous.data(), 3, 9, 5, first, sizeof(first));
 
     CHECK_EQ(firstResult.error, RingError::none);
     CHECK_EQ(firstResult.bytesCopied, sizeof(first));
-    CHECK_EQ(firstResult.nextProducerIndex, 3U);
+    CHECK_EQ(firstResult.nextProducerIndex, 11U);
     CHECK_EQ(contiguous[1], 0x11);
     CHECK_EQ(contiguous[2], 0x22);
 
@@ -75,7 +75,7 @@ void testWritesContiguousAndWrappedRx()
 
     CHECK_EQ(secondResult.error, RingError::none);
     CHECK_EQ(secondResult.bytesCopied, sizeof(second));
-    CHECK_EQ(secondResult.nextProducerIndex, 2U);
+    CHECK_EQ(secondResult.nextProducerIndex, 10U);
     CHECK_EQ(wrapped[7], 0xa7);
     CHECK_EQ(wrapped[0], 0xa0);
     CHECK_EQ(wrapped[1], 0xa1);
@@ -87,19 +87,19 @@ void testRxPreservesOneSlotAndReportsPartialWrite()
     const std::uint8_t input[] = {1, 2, 3, 4, 5};
 
     const auto partial = ch9344::driver::writeRxRing(
-        ring.data(), 3, 2, 5, input, sizeof(input));
+        ring.data(), 3, 10, 5, input, sizeof(input));
     CHECK_EQ(partial.error, RingError::none);
     CHECK_EQ(partial.bytesCopied, 2U);
-    CHECK_EQ(partial.nextProducerIndex, 4U);
+    CHECK_EQ(partial.nextProducerIndex, 12U);
     CHECK_EQ(ring[2], 1);
     CHECK_EQ(ring[3], 2);
     CHECK_EQ(ring[4], 0xa5);
 
     const auto full = ch9344::driver::writeRxRing(
-        ring.data(), 3, 4, 5, input, sizeof(input));
+        ring.data(), 3, 12, 5, input, sizeof(input));
     CHECK_EQ(full.error, RingError::none);
     CHECK_EQ(full.bytesCopied, 0U);
-    CHECK_EQ(full.nextProducerIndex, 4U);
+    CHECK_EQ(full.nextProducerIndex, 12U);
 }
 
 void testRejectsInvalidRingMetadataWithoutWriting()
@@ -139,6 +139,69 @@ void testRejectsInvalidRingMetadataWithoutWriting()
         RingError::invalidArgument);
     CHECK_EQ(ring[0], 0xa5);
     CHECK_EQ(output[0], 0x5a);
+}
+
+void testAcceptsLiveTxCountersBeyondTheRingSize()
+{
+    // Captured during the 64 KiB hardware failure: ring size 16384, queue full.
+    std::array<std::uint8_t, 16384> ring {};
+    for (std::size_t index = 0; index < ring.size(); ++index) {
+        ring[index] = static_cast<std::uint8_t>(index);
+    }
+    std::array<std::uint8_t, 512> frame {};
+    const auto result = ch9344::driver::prepareTxTransfer(
+        3, ring.data(), 14, 30028, 13645, 512, frame.data(), frame.size());
+    CHECK_EQ(result.error, ch9344::driver::DriverCoreError::none);
+    CHECK_EQ(result.payloadLength, 509U);
+    CHECK_EQ(result.nextConsumerIndex, 14154U);
+    CHECK_BYTES(frame.data() + 3, ring.data() + 13645, 509);
+}
+
+void testCountersWrapAtUint32BoundaryOnly()
+{
+    const std::array<std::uint8_t, 8> tx {{0xa0, 0xa1, 2, 3, 4, 5, 0xa6, 0xa7}};
+    const std::uint8_t expected[] = {0xa6, 0xa7, 0xa0, 0xa1};
+    std::array<std::uint8_t, 4> output {};
+    const auto read = ch9344::driver::peekTxRing(
+        tx.data(), 3, 2, UINT32_MAX - 1, output.data(), output.size(), output.size());
+    CHECK_EQ(read.error, RingError::none);
+    CHECK_EQ(read.bytesCopied, 4U);
+    CHECK_EQ(read.nextConsumerIndex, 2U);
+    CHECK_BYTES(output.data(), expected, sizeof(expected));
+
+    std::array<std::uint8_t, 8> rx {};
+    const auto write = ch9344::driver::writeRxRing(
+        rx.data(), 3, UINT32_MAX - 1, UINT32_MAX - 3, expected, sizeof(expected));
+    CHECK_EQ(write.error, RingError::none);
+    CHECK_EQ(write.bytesCopied, 4U);
+    CHECK_EQ(write.nextProducerIndex, 2U);
+    CHECK_EQ(rx[6], 0xa6);
+    CHECK_EQ(rx[7], 0xa7);
+    CHECK_EQ(rx[0], 0xa0);
+    CHECK_EQ(rx[1], 0xa1);
+}
+
+void testRxAfterSeveralRingWrapsPreservesCountersAndBackpressure()
+{
+    std::array<std::uint8_t, 32> transfer {};
+    transfer[0] = 7;
+    transfer[1] = 3;
+    transfer[2] = 0xaa;
+    transfer[3] = 0xbb;
+    transfer[4] = 0xcc;
+    std::array<std::uint8_t, 8> ring {};
+    const auto delivered = ch9344::driver::deliverRxTransfer(
+        3, transfer.data(), transfer.size(), ring.data(), 3, 30, 27);
+    CHECK_EQ(delivered.error, ch9344::driver::DriverCoreError::none);
+    CHECK_EQ(delivered.bytesWritten, 3U);
+    CHECK_EQ(delivered.nextProducerIndex, 33U);
+    CHECK_EQ(ring[6], 0xaa);
+    CHECK_EQ(ring[7], 0xbb);
+    CHECK_EQ(ring[0], 0xcc);
+    const auto blocked = ch9344::driver::deliverRxTransfer(
+        3, transfer.data(), transfer.size(), ring.data(), 3, 33, 27);
+    CHECK_EQ(blocked.error, ch9344::driver::DriverCoreError::rxBackpressure);
+    CHECK_EQ(blocked.nextProducerIndex, 33U);
 }
 
 void testBuildsQChipPort4EightNOneConfiguration()
@@ -221,7 +284,7 @@ void testPreparesWrappedPort4TxWithoutCommittingRingIndex()
         3,
         ring.data(),
         3,
-        2,
+        10,
         6,
         512,
         output.data(),
@@ -230,7 +293,7 @@ void testPreparesWrappedPort4TxWithoutCommittingRingIndex()
     CHECK_EQ(result.error, ch9344::driver::DriverCoreError::none);
     CHECK_EQ(result.frameLength, sizeof(expected));
     CHECK_EQ(result.payloadLength, 4U);
-    CHECK_EQ(result.nextConsumerIndex, 2U);
+    CHECK_EQ(result.nextConsumerIndex, 10U);
     CHECK_BYTES(output.data(), expected, sizeof(expected));
 }
 
@@ -296,7 +359,7 @@ void testDeliversOnlyPort4RxAcrossRingWrap()
 
     CHECK_EQ(result.error, ch9344::driver::DriverCoreError::none);
     CHECK_EQ(result.bytesWritten, 3U);
-    CHECK_EQ(result.nextProducerIndex, 2U);
+    CHECK_EQ(result.nextProducerIndex, 10U);
     CHECK_EQ(ring[7], 0xa7);
     CHECK_EQ(ring[0], 0xa0);
     CHECK_EQ(ring[1], 0xa1);
@@ -318,13 +381,13 @@ void testRxBackpressureAndMalformedTransferDoNotModifyRing()
         transfer.size(),
         ring.data(),
         3,
-        2,
+        10,
         4);
     CHECK_EQ(
         backpressure.error,
         ch9344::driver::DriverCoreError::rxBackpressure);
     CHECK_EQ(backpressure.bytesWritten, 0U);
-    CHECK_EQ(backpressure.nextProducerIndex, 2U);
+    CHECK_EQ(backpressure.nextProducerIndex, 10U);
     CHECK_EQ(ring[2], 0xa5);
 
     transfer[1] = 31;
@@ -352,6 +415,9 @@ int main()
     testWritesContiguousAndWrappedRx();
     testRxPreservesOneSlotAndReportsPartialWrite();
     testRejectsInvalidRingMetadataWithoutWriting();
+    testAcceptsLiveTxCountersBeyondTheRingSize();
+    testCountersWrapAtUint32BoundaryOnly();
+    testRxAfterSeveralRingWrapsPreservesCountersAndBackpressure();
     testBuildsQChipPort4EightNOneConfiguration();
     testRejectsUnsupportedLineCodingAndProtocolErrorsWithoutWriting();
     testBuildsPort4DtrRtsConfiguration();

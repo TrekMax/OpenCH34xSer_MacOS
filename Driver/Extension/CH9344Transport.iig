@@ -25,6 +25,12 @@ public:
         uint32_t actualByteCount,
         uint64_t completionTimestamp)
         TYPE(IOUSBHostPipe::CompleteAsyncIO);
+    virtual void StatusInComplete(
+        OSAction* action,
+        IOReturn status,
+        uint32_t actualByteCount,
+        uint64_t completionTimestamp)
+        TYPE(IOUSBHostPipe::CompleteAsyncIO);
 
     bool IsTransportReady() LOCALONLY;
     void NotifyTx(uint8_t logicalPort) LOCALONLY;
@@ -46,6 +52,7 @@ public:
     void ReleaseDataResources() LOCALONLY;
     void StartTxLocked() LOCALONLY;
     void SubmitDataInLocked() LOCALONLY;
+    kern_return_t SubmitStatusInLocked() LOCALONLY;
     void DeliverPendingRxLocked() LOCALONLY;
     void DeactivateTransport() LOCALONLY;
 };

@@ -1,0 +1,17 @@
+#ifndef CH9344Device_h
+#define CH9344Device_h
+
+#include <DriverKit/IOService.iig>
+
+// Vendor-specific CH9344 devices need a configuration before interfaces exist.
+class CH9344Device : public IOService
+{
+public:
+    virtual bool init() override;
+    virtual kern_return_t Start(IOService* provider) override;
+    virtual kern_return_t Stop(IOService* provider) override;
+    virtual void free() override;
+    void CloseDevice() LOCALONLY;
+};
+
+#endif

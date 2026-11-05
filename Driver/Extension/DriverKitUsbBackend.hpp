@@ -16,6 +16,7 @@ struct DriverKitUsbState {
     IOBufferMemoryDescriptor* commandBuffer;
     IOAddressSegment commandRange;
     bool opened;
+    bool asyncStatusReader;
 };
 
 class DriverKitUsbBackend final : public ch9344::driver::UsbTransactionBackend {

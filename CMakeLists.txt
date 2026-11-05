@@ -129,6 +129,10 @@ option(
 )
 if(CH9344_ENABLE_DRIVERKIT_SYSTEM_TESTS)
     add_test(
+        NAME driverkit_signed_bundle
+        COMMAND python3 ${CMAKE_SOURCE_DIR}/tests/driverkit/test_signed_bundle.py
+    )
+    add_test(
         NAME driverkit_activation
         COMMAND bash ${CMAKE_SOURCE_DIR}/tests/driverkit/test_activation.sh
     )
@@ -137,14 +141,19 @@ if(CH9344_ENABLE_DRIVERKIT_SYSTEM_TESTS)
         COMMAND bash ${CMAKE_SOURCE_DIR}/tests/driverkit/test_serial_nodes.sh 4
     )
     add_test(
+        NAME driverkit_serial_lifecycle
+        COMMAND python3 ${CMAKE_SOURCE_DIR}/tests/driverkit/test_serial_lifecycle.py attached
+    )
+    add_test(
         NAME driverkit_port4_tty_loopback
         COMMAND python3
             ${CMAKE_SOURCE_DIR}/tests/driverkit/test_port4_tty_loopback.py
-            /dev/cu.OpenCH34x4
     )
     set_tests_properties(
         driverkit_activation
+        driverkit_signed_bundle
         driverkit_serial_nodes
+        driverkit_serial_lifecycle
         driverkit_port4_tty_loopback
         PROPERTIES
             LABELS "driverkit;hardware"

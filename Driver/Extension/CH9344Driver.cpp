@@ -2,7 +2,10 @@
 #include <DriverKit/IOLib.h>
 #include <DriverKit/IOMemoryDescriptor.h>
 #include <DriverKit/IOMemoryMap.h>
+#include <DriverKit/OSDictionary.h>
+#include <DriverKit/OSString.h>
 #include <SerialDriverKit/SerialPortInterface.h>
+#include <cstdio>
 
 #include "../Shared/DriverCore.hpp"
 #include "CH9344Driver.h"
@@ -47,12 +50,16 @@ kern_return_t IMPL(CH9344Driver, Start)
 
 kern_return_t IMPL(CH9344Driver, Stop)
 {
+    os_log(OS_LOG_DEFAULT, "CH9344Driver Stop begin");
     if (ivars != nullptr) {
         ivars->active = false;
         ReleaseQueueMappings();
         ivars->transport = nullptr;
     }
-    return Stop(provider, SUPERDISPATCH);
+    os_log(OS_LOG_DEFAULT, "CH9344Driver Stop before super");
+    const kern_return_t result = Stop(provider, SUPERDISPATCH);
+    os_log(OS_LOG_DEFAULT, "CH9344Driver Stop super returned 0x%x", result);
+    return result;
 }
 
 void CH9344Driver::free()
@@ -70,6 +77,30 @@ bool CH9344Driver::ConfigurePort(std::uint8_t logicalPort)
         return false;
     }
     ivars->logicalPort = logicalPort;
+    uint64_t registryID = 0;
+    if (GetRegistryEntryID(&registryID) != kIOReturnSuccess) {
+        return false;
+    }
+    char baseName[32];
+    char suffix[24];
+    std::snprintf(baseName, sizeof(baseName), "serialCH93xxUSB%u-", logicalPort);
+    std::snprintf(suffix, sizeof(suffix), "%llX", static_cast<unsigned long long>(registryID));
+    OSDictionary* properties = OSDictionary::withCapacity(2);
+    OSString* base = OSString::withCString(baseName);
+    OSString* uniqueSuffix = OSString::withCString(suffix);
+    kern_return_t result = kIOReturnNoMemory;
+    if (properties != nullptr && base != nullptr && uniqueSuffix != nullptr &&
+        properties->setObject("IOTTYBaseName", base) &&
+        properties->setObject("IOTTYSuffix", uniqueSuffix)) {
+        result = SetProperties(properties);
+    }
+    OSSafeReleaseNULL(uniqueSuffix);
+    OSSafeReleaseNULL(base);
+    OSSafeReleaseNULL(properties);
+    os_log(OS_LOG_DEFAULT, "CH9344Driver port %u naming returned 0x%x", logicalPort, result);
+    if (result != kIOReturnSuccess) {
+        return false;
+    }
     ivars->configured = true;
     return true;
 }
@@ -302,6 +333,10 @@ bool CH9344Driver::PrepareTx(
         outputCapacity);
     if (prepared.error != ch9344::driver::DriverCoreError::none ||
         prepared.frameLength == 0) {
+        if (prepared.error != ch9344::driver::DriverCoreError::none) {
+            os_log(OS_LOG_DEFAULT, "CH9344Driver TX prepare failed %u pi %u ci %u logsz %u",
+                static_cast<unsigned>(prepared.error), producer, consumer, ivars->serialInterface->txqlogsz);
+        }
         return false;
     }
     *frameLength = static_cast<std::uint32_t>(prepared.frameLength);
@@ -335,7 +370,9 @@ void CH9344Driver::CompleteTx(
         &ivars->serialInterface->txCI,
         completion.nextConsumerIndex,
         __ATOMIC_RELEASE);
+    os_log(OS_LOG_DEFAULT, "CH9344Driver port %u TxFreeSpaceAvailable begin", ivars->logicalPort);
     TxFreeSpaceAvailable();
+    os_log(OS_LOG_DEFAULT, "CH9344Driver TxFreeSpaceAvailable end");
 }
 
 std::int32_t CH9344Driver::DeliverRx(
@@ -366,7 +403,9 @@ std::int32_t CH9344Driver::DeliverRx(
             &ivars->serialInterface->rxPI,
             delivered.nextProducerIndex,
             __ATOMIC_RELEASE);
+        os_log(OS_LOG_DEFAULT, "CH9344Driver port %u RxDataAvailable begin bytes %zu", ivars->logicalPort, delivered.bytesWritten);
         RxDataAvailable();
+        os_log(OS_LOG_DEFAULT, "CH9344Driver RxDataAvailable end");
     }
     return static_cast<std::int32_t>(delivered.error);
 }

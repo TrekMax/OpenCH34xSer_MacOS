@@ -3,22 +3,21 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "$0")/../.." && pwd)"
-derived_data="$(mktemp -d /tmp/opench34xser-unsigned.XXXXXX)"
+derived_data="$(mktemp -d /tmp/opench93xxser-unsigned.XXXXXX)"
 trap 'rm -rf "$derived_data"' EXIT
 
-DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer \
-    xcodebuild -quiet \
-    -project "$repo_root/Driver/OpenCH34xSer.xcodeproj" \
-    -scheme OpenCH34xSerHost \
+xcodebuild -quiet \
+    -project "$repo_root/Driver/OpenCH93xxSer.xcodeproj" \
+    -scheme OpenCH93xxSer \
     -configuration Debug \
     -destination 'platform=macOS,arch=arm64' \
     -derivedDataPath "$derived_data" \
     CODE_SIGNING_ALLOWED=NO \
     clean build
 
-app="$derived_data/Build/Products/Debug/OpenCH34xSerHost.app"
+app="$derived_data/Build/Products/Debug/OpenCH93xxSer.app"
 dext="$app/Contents/Library/SystemExtensions/com.trekmax.OpenCH34xSer.driver.dext"
-host_executable="$app/Contents/MacOS/OpenCH34xSerHost"
+host_executable="$app/Contents/MacOS/OpenCH93xxSer"
 dext_executable="$dext/com.trekmax.OpenCH34xSer.driver"
 
 test -x "$host_executable"
@@ -46,6 +45,6 @@ test "$(plutil -extract 'com\.apple\.developer\.driverkit' raw \
 test "$(plutil -extract 'com\.apple\.developer\.driverkit\.family\.serial' raw \
     "$repo_root/Driver/Extension/CH9344Driver.entitlements")" = "true"
 test "$(plutil -extract 'com\.apple\.developer\.system-extension\.install' raw \
-    "$repo_root/Driver/Host/OpenCH34xSerHost.entitlements")" = "true"
+    "$repo_root/Driver/Host/OpenCH93xxSer.entitlements")" = "true"
 
 echo "unsigned DriverKit bundle checks passed"

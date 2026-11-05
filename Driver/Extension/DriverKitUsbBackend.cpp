@@ -129,6 +129,11 @@ bool DriverKitUsbBackend::writeCommand(
 
 bool DriverKitUsbBackend::drainCommandStatus()
 {
+    // Once activated, the transport owns command IN and consumes UART credits.
+    // A synchronous drain here would steal those notifications.
+    if (state_ != nullptr && state_->asyncStatusReader) {
+        return true;
+    }
     if (state_ == nullptr || state_->commandIn == nullptr ||
         state_->commandBuffer == nullptr) {
         return false;

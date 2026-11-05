@@ -37,6 +37,7 @@ protocol ExtensionRequestSubmitting: AnyObject {
 }
 
 final class SystemExtensionController: ObservableObject, ExtensionEventHandling {
+    // Keep the provisioned identity so OpenCH93xxSer upgrades the existing driver.
     static let driverIdentifier = "com.trekmax.OpenCH34xSer.driver"
 
     private let submitter: ExtensionRequestSubmitting
